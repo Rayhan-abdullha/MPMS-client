@@ -2,241 +2,267 @@
 
 import React from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/utils/api";
-import { createTaskSchema, CreateTaskInput } from "../board.schema";
-import { X, Loader2, Plus, AlertCircle } from "lucide-react";
-import { clsx } from "clsx";
+import {
+  X,
+  Clock,
+  AlertCircle,
+  FileText,
+  Paperclip,
+  Loader2,
+  Plus,
+} from "lucide-react";
+
+export interface TaskFormData {
+  title: string;
+  description: string;
+  assignees: string; // Comma-delimited text layout mapping into data arrays on serialization boundaries
+  estimateHours: number;
+  priority: "LOW" | "MEDIUM" | "HIGH";
+  status: "TO DO" | "IN PROGRESS" | "REVIEW" | "DONE";
+  dueDate: string;
+  attachments?: FileList;
+}
 
 interface CreateTaskModalProps {
   isOpen: boolean;
   onClose: () => void;
-  defaultColumnId?: string;
+  onSubmit: (data: any) => Promise<void>;
+  isPending?: boolean;
+  teamMembers?: { id: string; name: string }[]; // Fed dynamically from the /team endpoints matrix
 }
 
 export default function CreateTaskModal({
   isOpen,
   onClose,
-  defaultColumnId = "col-backlog",
+  onSubmit,
+  isPending = false,
+  teamMembers = [],
 }: CreateTaskModalProps) {
-  const queryClient = useQueryClient();
-
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<CreateTaskInput>({
-    resolver: zodResolver(createTaskSchema),
+  } = useForm<TaskFormData>({
     defaultValues: {
-      columnId: defaultColumnId,
       priority: "MEDIUM",
-      title: "",
-      description: "",
-      assigneeName: "",
+      status: "TO DO",
+      estimateHours: 1,
     },
   });
 
-  // TanStack Mutation handling network delivery and state cache clearing
-  const createTaskMutation = useMutation({
-    mutationFn: async (data: CreateTaskInput) => {
-      // Swapping out mock state mutations with real endpoint pipelines
-      const response = await api.post("/tasks", data);
-      return response.data;
-    },
-    onSuccess: () => {
-      // Invalidate active board caches to trigger clean data refetches
-      queryClient.invalidateQueries({ queryKey: ["workspace_projects"] });
-      reset();
-      onClose();
-    },
-    onError: (error: any) => {
-      console.error("Task registration fault:", error);
-    },
-  });
+  const handleFormSubmit = async (data: TaskFormData) => {
+    // Structural conversion converting text lines to multi-tenant array objects before passing across network paths
+    const processingPayload = {
+      ...data,
+      estimateHours: Number(data.estimateHours) || 0,
+      assignees: data.assignees
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean),
+    };
+    await onSubmit(processingPayload);
+    reset();
+    onClose();
+  };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-end animate-in fade-in duration-200">
-      {/* Backdrop panel background shade */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
       <div
-        className="absolute inset-0 bg-zinc-900/30 backdrop-blur-xs"
+        className="absolute inset-0 bg-zinc-900/40 backdrop-blur-xs"
         onClick={onClose}
       />
 
-      {/* Structural Slide-over Container */}
-      <div className="relative w-full max-w-lg h-full bg-premium-card border-l border-premium-border shadow-2xl flex flex-col justify-between animate-in slide-in-from-right duration-300">
-        {/* Component Header Segment */}
-        <div className="h-16 border-b border-premium-border px-6 flex items-center justify-between bg-white">
-          <div>
-            <h2 className="text-base font-bold text-zinc-900 tracking-tight">
-              Initialize Task Card
-            </h2>
-            <p className="text-xs text-premium-textMuted">
-              Inject standard tracking modules into active sprint pipelines.
-            </p>
+      <div className="relative w-full max-w-lg bg-white border border-zinc-200 shadow-2xl rounded-xl overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-200">
+        {/* Component Title Segment Bar */}
+        <div className="px-6 py-4 border-b border-zinc-100 flex items-center justify-between bg-white">
+          <div className="flex items-center gap-2.5">
+            <div className="h-9 w-9 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center">
+              <FileText className="h-4.5 w-4.5" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-zinc-900 tracking-tight">
+                Provision Backlog Task
+              </h2>
+              <p className="text-xs text-zinc-400">
+                Map executable deliverables down into sprint columns.
+              </p>
+            </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 rounded-lg outline-none cursor-pointer"
+            className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 rounded-lg cursor-pointer transition-colors outline-none"
           >
-            <X className="h-4.5 w-4.5" />
+            <X className="h-4 w-4" />
           </button>
         </div>
 
-        {/* Dynamic Form Engine Entry Body */}
+        {/* Task Attribute Grid Configuration Elements Form context */}
         <form
-          id="task-generation-form"
-          onSubmit={handleSubmit((data) => createTaskMutation.mutate(data))}
-          className="flex-1 overflow-y-auto p-6 space-y-5 bg-zinc-50/40"
+          onSubmit={handleSubmit(handleFormSubmit)}
+          className="flex-1 overflow-y-auto p-6 space-y-4 bg-zinc-50/30"
         >
-          {createTaskMutation.isError && (
-            <div className="p-3.5 bg-red-50 border border-red-100 rounded-lg flex items-start gap-2.5 text-xs text-red-700">
-              <AlertCircle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
-              <div>
-                <span className="font-bold">Transmission Pipeline Fault:</span>{" "}
-                An error occurred while pushing this card node to your remote
-                server. Please verify your connection parameter logs.
-              </div>
-            </div>
-          )}
-
-          {/* Input Block: Title */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-zinc-700 uppercase tracking-wider">
-              Task Title
+              Task Title Header
             </label>
             <input
               type="text"
-              placeholder="e.g., Architect Double-Entry Ledger Nodes"
-              {...register("title")}
-              className={clsx(
-                "w-full px-3 py-2 text-sm rounded-lg border outline-none bg-white text-zinc-900 transition-all",
-                errors.title
-                  ? "border-red-300 focus:ring-1 focus:ring-red-400"
-                  : "border-premium-border focus:border-brand-primary focus:ring-1 focus:ring-brand-primary",
-              )}
+              placeholder="e.g., Integrate JWT Auth Middleware cookies routing"
+              {...register("title", {
+                required: "Task tracking header identifier required",
+              })}
+              className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 bg-white text-zinc-900 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600"
             />
             {errors.title && (
-              <p className="text-xs font-semibold text-red-600 mt-1">
+              <p className="text-xs text-red-600 font-semibold">
                 {errors.title.message}
               </p>
             )}
           </div>
 
-          {/* Grid Selector Block: Priority & Column target destination parameters */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-zinc-700 uppercase tracking-wider">
-                Priority Weight
-              </label>
-              <select
-                {...register("priority")}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-premium-border bg-white text-zinc-900 outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary appearance-none cursor-pointer"
-              >
-                <option value="LOW">Low Velocity</option>
-                <option value="MEDIUM">Medium Target</option>
-                <option value="HIGH">High Priority</option>
-                <option value="CRITICAL">Critical Path</option>
-              </select>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-zinc-700 uppercase tracking-wider">
-                Sprint Column Destination
-              </label>
-              <select
-                {...register("columnId")}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-premium-border bg-white text-zinc-900 outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary appearance-none cursor-pointer"
-              >
-                <option value="col-backlog">Sprint Backlog</option>
-                <option value="col-progress">In Progress</option>
-                <option value="col-review">Code Review</option>
-                <option value="col-done">Done / Verified</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Input Block: Assignee Identity Tag */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-zinc-700 uppercase tracking-wider">
-              Assignee Alias
-            </label>
-            <input
-              type="text"
-              placeholder="e.g., Rayhan"
-              {...register("assigneeName")}
-              className={clsx(
-                "w-full px-3 py-2 text-sm rounded-lg border outline-none bg-white text-zinc-900 transition-all",
-                errors.assigneeName
-                  ? "border-red-300 focus:ring-1 focus:ring-red-400"
-                  : "border-premium-border focus:border-brand-primary focus:ring-1 focus:ring-brand-primary",
-              )}
-            />
-            {errors.assigneeName && (
-              <p className="text-xs font-semibold text-red-600 mt-1">
-                {errors.assigneeName.message}
-              </p>
-            )}
-          </div>
-
-          {/* Input Block: Description */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-zinc-700 uppercase tracking-wider">
-              Detailed Technical Scope description
+              Task Scope / Acceptance Criteria
             </label>
             <textarea
-              rows={5}
-              placeholder="Describe dependencies, execution patterns, and clear acceptance validation metrics..."
-              {...register("description")}
-              className={clsx(
-                "w-full px-3 py-2 text-sm rounded-lg border outline-none bg-white text-zinc-900 transition-all resize-none leading-relaxed",
-                errors.description
-                  ? "border-red-300 focus:ring-1 focus:ring-red-400"
-                  : "border-premium-border focus:border-brand-primary focus:ring-1 focus:ring-brand-primary",
-              )}
+              rows={3}
+              placeholder="State explicit edge cases, signature token lifecycles, and verification goals..."
+              {...register("description", {
+                required: "Explicit task description parameters required",
+              })}
+              className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 bg-white text-zinc-900 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 resize-none leading-relaxed"
             />
             {errors.description && (
-              <p className="text-xs font-semibold text-red-600 mt-1">
+              <p className="text-xs text-red-600 font-semibold">
                 {errors.description.message}
               </p>
             )}
           </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-zinc-700 uppercase tracking-wider flex items-center gap-1">
+                <Clock className="h-3.5 w-3.5 text-zinc-400" /> Estimate
+                Allocation (Hours)
+              </label>
+              <input
+                type="number"
+                placeholder="8"
+                {...register("estimateHours", { required: true, min: 1 })}
+                className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 bg-white text-zinc-900 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-zinc-700 uppercase tracking-wider flex items-center gap-1">
+                <AlertCircle className="h-3.5 w-3.5 text-zinc-400" /> Priority
+                Weight Node
+              </label>
+              <select
+                {...register("priority")}
+                className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 bg-white text-zinc-900 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 cursor-pointer appearance-none"
+              >
+                <option value="LOW">Low Risk</option>
+                <option value="MEDIUM">Medium Standard</option>
+                <option value="HIGH">Critical Escalation / High</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-zinc-700 uppercase tracking-wider">
+                Target Node Delivery Date
+              </label>
+              <input
+                type="date"
+                {...register("dueDate", {
+                  required: "Due date completion criteria required",
+                })}
+                className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 bg-white text-zinc-900 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 cursor-pointer"
+              />
+              {errors.dueDate && (
+                <p className="text-xs text-red-600 font-semibold">
+                  {errors.dueDate.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-zinc-700 uppercase tracking-wider">
+                Assignee Vector Accounts
+              </label>
+              <input
+                type="text"
+                placeholder="e.g., Rayhan, Asif Rahman"
+                {...register("assignees", {
+                  required: "At least one worker target assignment is required",
+                })}
+                className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 bg-white text-zinc-900 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600"
+              />
+              {errors.assignees && (
+                <p className="text-xs text-red-600 font-semibold">
+                  {errors.assignees.message}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Core File Asset Upload Gateway Portal */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-zinc-700 uppercase tracking-wider">
+              Reference Attachments (PDF / Image)
+            </label>
+            <div className="border-2 border-dashed border-zinc-200 rounded-lg p-4 bg-white text-center hover:border-zinc-300 transition-colors relative group">
+              <input
+                type="file"
+                multiple
+                accept="image/*,application/pdf"
+                {...register("attachments")}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              />
+              <Paperclip className="h-5 w-5 text-zinc-400 mx-auto mb-1.5 group-hover:text-indigo-600 transition-colors" />
+              <p className="text-xs font-medium text-zinc-600">
+                Select local engineering documents or architecture layout
+                renders
+              </p>
+              <p className="text-[10px] text-zinc-400 mt-0.5">
+                Max footprint constraints apply per request block boundary
+              </p>
+            </div>
+          </div>
+
+          {/* Action Trigger base bar control group wrapper */}
+          <div className="pt-4 border-t border-zinc-100 flex items-center justify-end gap-3 bg-white -mx-6 -mb-6 p-4">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isPending}
+              className="px-4 py-2 text-xs font-bold text-zinc-600 hover:text-zinc-900 bg-white border border-zinc-200 rounded-lg transition-colors cursor-pointer outline-none"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isPending}
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg shadow-xs transition-colors outline-none cursor-pointer"
+            >
+              {isPending ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Committing...
+                </>
+              ) : (
+                <>
+                  <Plus className="h-3.5 w-3.5" /> Append To Sprint Backlog
+                </>
+              )}
+            </button>
+          </div>
         </form>
-
-        {/* Action Panel Footer Row */}
-        <div className="h-18 border-t border-premium-border px-6 flex items-center justify-end gap-3 bg-white">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={createTaskMutation.isPending}
-            className="px-4 py-2 text-sm font-semibold text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 border border-premium-border rounded-lg transition-colors cursor-pointer outline-none disabled:opacity-50"
-          >
-            Cancel
-          </button>
-
-          <button
-            type="submit"
-            form="task-generation-form"
-            disabled={createTaskMutation.isPending}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-brand-primary hover:bg-brand-hover text-white text-sm font-semibold rounded-lg shadow-sm transition-colors cursor-pointer outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary disabled:bg-zinc-300 disabled:cursor-not-allowed"
-          >
-            {createTaskMutation.isPending ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" /> Transmitting
-                Node...
-              </>
-            ) : (
-              <>
-                <Plus className="h-4 w-4" /> Deploy Task Card
-              </>
-            )}
-          </button>
-        </div>
       </div>
     </div>
   );
 }
-s;
