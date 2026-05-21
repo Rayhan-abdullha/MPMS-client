@@ -9,7 +9,7 @@ export interface User {
 export interface AuthResponse {
   status: string;
   data: {
-    token: string;
+    accessToken: string;
     user: User;
   };
 }

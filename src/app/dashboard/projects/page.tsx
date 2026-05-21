@@ -25,65 +25,38 @@ interface Project {
 
 export default function ProjectsPage() {
   const [userRole, setUserRole] = useState<string>("MEMBER");
-
-  useEffect(() => {
-    const storedUser = localStorage.getItem("mpms_user");
-    if (storedUser) {
-      try {
-        const parsed = JSON.parse(storedUser);
-        setUserRole(parsed.role || "MEMBER");
-      } catch (e) {}
-    }
-  }, []);
-
-  // Fetch active project data array via central API routing engine
-  const {
-    data: projects,
-    isLoading,
-    error,
-  } = useQuery<Project[]>({
-    queryKey: ["workspace_projects"],
-    queryFn: async () => {
-      // Graceful local mockup tracking injection fallback if server API is launching concurrently
-      try {
-        const res = await api.get("/projects");
-        return res.data?.data || [];
-      } catch (err) {
-        return [
-          {
-            id: "1",
-            name: "Fintech Core Engine Deployment",
-            description:
-              "Double-entry asset processing ledgers matching strict international clearing protocols.",
-            status: "ACTIVE",
-            progress: 74,
-            taskCount: 24,
-            updatedAt: "2026-05-20",
-          },
-          {
-            id: "2",
-            name: "Omnichannel Coupon Router",
-            description:
-              "High-concurrency logic pipeline optimizing real-time cart distribution variables.",
-            status: "PLANNING",
-            progress: 12,
-            taskCount: 8,
-            updatedAt: "2026-05-18",
-          },
-          {
-            id: "3",
-            name: "Blood Analytics Verification App",
-            description:
-              "Platform matching verification algorithms with regional distribution structures.",
-            status: "COMPLETED",
-            progress: 100,
-            taskCount: 42,
-            updatedAt: "2026-04-12",
-          },
-        ] as Project[];
-      }
+  const data = [
+    {
+      id: "1",
+      name: "Fintech Core Engine Deployment",
+      description:
+        "Double-entry asset processing ledgers matching strict international clearing protocols.",
+      status: "ACTIVE",
+      progress: 74,
+      taskCount: 24,
+      updatedAt: "2026-05-20",
     },
-  });
+    {
+      id: "2",
+      name: "Omnichannel Coupon Router",
+      description:
+        "High-concurrency logic pipeline optimizing real-time cart distribution variables.",
+      status: "PLANNING",
+      progress: 12,
+      taskCount: 8,
+      updatedAt: "2026-05-18",
+    },
+    {
+      id: "3",
+      name: "Blood Analytics Verification App",
+      description:
+        "Platform matching verification algorithms with regional distribution structures.",
+      status: "COMPLETED",
+      progress: 100,
+      taskCount: 42,
+      updatedAt: "2026-04-12",
+    },
+  ] as Project[];
 
   const getStatusStyles = (status: Project["status"]) => {
     const configurations = {
@@ -95,7 +68,7 @@ export default function ProjectsPage() {
     return configurations[status] || configurations.PLANNING;
   };
 
-  if (isLoading) {
+  if (false) {
     return (
       <div className="h-[60vh] flex flex-col items-center justify-center gap-3">
         <Loader2 className="h-8 w-8 text-brand-primary animate-spin" />
@@ -129,9 +102,9 @@ export default function ProjectsPage() {
       </div>
 
       {/* Grid Explorer Framework Block */}
-      {projects && projects.length > 0 ? (
+      {data && data.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.map((project) => (
+          {data.map((project) => (
             <div
               key={project.id}
               className="bg-premium-card border border-premium-border rounded-xl p-6 shadow-xs flex flex-col justify-between hover:border-zinc-300 transition-all hover:shadow-sm"

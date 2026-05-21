@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { api } from "@/utils/api";
 import { LoginPayload, RegisterPayload, AuthResponse } from "../auth.types";
 import { useState } from "react";
+import Cookies from "js-cookie";
 
 export const useAuth = () => {
   const router = useRouter();
@@ -18,7 +19,6 @@ export const useAuth = () => {
       return data;
     },
     onSuccess: (response) => {
-      localStorage.setItem("mpms_auth_token", response.data.token);
       localStorage.setItem("mpms_user", JSON.stringify(response.data.user));
       queryClient.setQueryData(["current_user"], response.data.user);
       router.push("/dashboard/projects");
@@ -37,10 +37,7 @@ export const useAuth = () => {
       return data;
     },
     onSuccess: (response) => {
-      localStorage.setItem("mpms_auth_token", response.data.token);
-      localStorage.setItem("mpms_user", JSON.stringify(response.data.user));
-      queryClient.setQueryData(["current_user"], response.data.user);
-      router.push("/dashboard/projects");
+      router.push("/login");
     },
     onError: (err: any) => {
       setErrorText(
@@ -50,19 +47,27 @@ export const useAuth = () => {
     },
   });
 
-  const logout = () => {
-    localStorage.removeItem("mpms_auth_token");
-    localStorage.removeItem("mpms_user");
-    queryClient.clear();
-    router.push("/login");
-  };
+  const logout = useMutation({
+    mutationFn: async () => {
+      await api.post("/auth/logout");
+    },
+    onSuccess: () => {
+      console.log("Logout successful");
+      localStorage.removeItem("mpms_user");
+      queryClient.setQueryData(["current_user"], null);
+      router.push("/auth/login");
+    },
+    onError: () => {
+      console.error("Logout failed. Please try again.");
+    },
+  });
 
   return {
     login: loginMutation.mutate,
     isLoggingIn: loginMutation.isPending,
     register: registerMutation.mutate,
     isRegistering: registerMutation.isPending,
-    logout,
+    logout: logout.mutate,
     errorText,
   };
 };

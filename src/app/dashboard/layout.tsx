@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import React, { useState } from "react";
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import SignOut from "@/components/share/SignOut";
 import {
   FolderGit2,
   Layers,
@@ -35,7 +36,6 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const router = useRouter();
   const pathname = usePathname();
   const { logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -44,25 +44,6 @@ export default function DashboardLayout({
     email: string;
     role: string;
   } | null>(null);
-
-  useEffect(() => {
-    // Sync local storage state data safely inside client runtime environment
-    const storedUser = localStorage.getItem("mpms_user");
-    const token = localStorage.getItem("mpms_auth_token");
-
-    if (!token) {
-      router.push("/login");
-      return;
-    }
-
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (e) {
-        setUser({ name: "Team Member", email: "", role: "MEMBER" });
-      }
-    }
-  }, [router]);
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -124,13 +105,7 @@ export default function DashboardLayout({
               </div>
             </div>
           )}
-          <button
-            onClick={logout}
-            className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50/60 rounded-lg transition-colors cursor-pointer outline-none group"
-          >
-            <LogOut className="h-4.5 w-4.5 text-red-400 group-hover:text-red-600 transition-colors" />
-            Sign Out
-          </button>
+          <SignOut />
         </div>
       </aside>
 
@@ -189,8 +164,7 @@ export default function DashboardLayout({
                 }}
                 className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg cursor-pointer"
               >
-                <LogOut className="h-4.5 w-4.5" />
-                Sign Out
+                <SignOut />
               </button>
             </div>
           </div>

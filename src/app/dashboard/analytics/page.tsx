@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { api } from "@/utils/api";
+
 import {
   TrendingUp,
   CheckCircle2,

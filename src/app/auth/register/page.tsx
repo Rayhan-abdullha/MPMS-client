@@ -1,24 +1,42 @@
 "use client";
 
-import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { useMutation } from "@tanstack/react-query";
 import { Input } from "@/components/ui/Input";
-import { useAuth } from "@/features/auth/hooks/useAuth";
 import { ShieldCheck, UserPlus, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
+import { api } from "@/utils/api";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+
+interface RegisterFormValues {
+  name: string;
+  email: string;
+  password: string;
+  role: "MEMBER" | "MANAGER" | "ADMIN";
+}
 
 export default function RegisterPage() {
-  const { register, isRegistering, errorText } = useAuth();
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    role: "MEMBER",
+  const { register, isLoggingIn, errorText } = useAuth();
+  const {
+    register: registerField,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<RegisterFormValues>({
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+      role: "MEMBER",
+    },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.name || !formData.email || !formData.password) return;
-    register(formData);
+  const onSubmit = (data: RegisterFormValues) => {
+    register({
+      email: data.email,
+      password: data.password,
+      name: data.name,
+      role: data.role,
+    });
   };
 
   return (
@@ -42,52 +60,80 @@ export default function RegisterPage() {
           </p>
         </div>
 
+        {/* API Error Feedback */}
         {errorText && (
           <div className="mb-5 p-3 rounded-lg bg-red-50 border border-red-100 text-xs font-medium text-red-600 animate-in fade-in zoom-in-95">
             {errorText}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            label="Full Name"
-            placeholder="John Doe"
-            required
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          />
+        {/* Validation Errors Summary (Optional, but helpful for UX) */}
+        {Object.keys(errors).length > 0 && !errorText && (
+          <div className="mb-5 p-3 rounded-lg bg-amber-50 border border-amber-100 text-xs font-medium text-amber-700 animate-in fade-in zoom-in-95">
+            Please fill out all required fields correctly.
+          </div>
+        )}
 
-          <Input
-            label="Work Email"
-            type="email"
-            placeholder="name@company.com"
-            required
-            value={formData.email}
-            onChange={(e) =>
-              setFormData({ ...formData, email: e.target.value })
-            }
-          />
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="space-y-1">
+            <Input
+              label="Full Name"
+              placeholder="John Doe"
+              {...registerField("name", { required: "Full name is required" })}
+            />
+            {errors.name && (
+              <p className="text-[11px] font-medium text-red-500 pl-1">
+                {errors.name.message}
+              </p>
+            )}
+          </div>
 
-          <Input
-            label="Password"
-            type="password"
-            placeholder="Minimum 6 characters"
-            required
-            value={formData.password}
-            onChange={(e) =>
-              setFormData({ ...formData, password: e.target.value })
-            }
-          />
+          <div className="space-y-1">
+            <Input
+              label="Work Email"
+              type="email"
+              placeholder="name@company.com"
+              {...registerField("email", {
+                required: "Email is required",
+                pattern: {
+                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                  message: "Invalid email address",
+                },
+              })}
+            />
+            {errors.email && (
+              <p className="text-[11px] font-medium text-red-500 pl-1">
+                {errors.email.message}
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-1">
+            <Input
+              label="Password"
+              type="password"
+              placeholder="Minimum 6 characters"
+              {...registerField("password", {
+                required: "Password is required",
+                minLength: {
+                  value: 6,
+                  message: "Password must be at least 6 characters",
+                },
+              })}
+            />
+            {errors.password && (
+              <p className="text-[11px] font-medium text-red-500 pl-1">
+                {errors.password.message}
+              </p>
+            )}
+          </div>
 
           <div className="space-y-1.5 text-left">
             <label className="text-xs font-semibold uppercase tracking-wider text-premium-textMuted">
               Workspace Core Account Role
             </label>
             <select
-              value={formData.role}
-              onChange={(e) =>
-                setFormData({ ...formData, role: e.target.value })
-              }
+              {...registerField("role")}
               className="w-full px-3.5 py-2.5 rounded-lg border border-premium-border bg-white text-zinc-900 text-sm transition-all duration-200 outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary shadow-sm shadow-zinc-100/50 cursor-pointer"
             >
               <option value="MEMBER">Team Member (Work Tracking Only)</option>
@@ -102,10 +148,10 @@ export default function RegisterPage() {
 
           <button
             type="submit"
-            disabled={isRegistering}
+            disabled={isLoggingIn}
             className="w-full mt-2 py-2.5 px-4 bg-brand-primary hover:bg-brand-hover disabled:bg-zinc-300 text-white font-medium text-sm rounded-lg shadow-sm transition-colors duration-150 flex items-center justify-center gap-2 outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary cursor-pointer disabled:cursor-not-allowed"
           >
-            {isRegistering ? (
+            {isLoggingIn ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <>
