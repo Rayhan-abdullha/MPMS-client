@@ -1,262 +1,269 @@
 "use client";
-
-import React from "react";
 import { useForm } from "react-hook-form";
+import { useParams, useSearchParams } from "next/navigation";
 import {
   X,
-  Clock,
-  AlertCircle,
-  FileText,
-  Paperclip,
   Loader2,
   Plus,
+  Users,
+  Calendar,
+  Clock,
+  AlertCircle,
 } from "lucide-react";
+import { useBoard } from "../hooks/useBoard";
+import { useUsers } from "@/features/user/hooks/useUsers";
+import { Team } from "@/features/user/user.types";
 
 export interface TaskFormData {
   title: string;
-  description: string;
-  assignees: string; // Comma-delimited text layout mapping into data arrays on serialization boundaries
-  estimateHours: number;
+  description?: string;
+  estimateHours?: number;
+  dueDate?: string;
   priority: "LOW" | "MEDIUM" | "HIGH";
-  status: "TO DO" | "IN PROGRESS" | "REVIEW" | "DONE";
-  dueDate: string;
-  attachments?: FileList;
+  assignedIds?: string[];
 }
 
 interface CreateTaskModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: any) => Promise<void>;
-  isPending?: boolean;
-  teamMembers?: { id: string; name: string }[]; // Fed dynamically from the /team endpoints matrix
 }
 
 export default function CreateTaskModal({
   isOpen,
   onClose,
-  onSubmit,
-  isPending = false,
-  teamMembers = [],
 }: CreateTaskModalProps) {
+  const params = useParams();
+  const sprintId = params?.slag as string;
+  const searchParams = useSearchParams();
+  const projectId = searchParams.get("projectId");
+
   const {
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<TaskFormData>({
     defaultValues: {
       priority: "MEDIUM",
-      status: "TO DO",
-      estimateHours: 1,
+      assignedIds: [],
     },
   });
 
-  const handleFormSubmit = async (data: TaskFormData) => {
-    // Structural conversion converting text lines to multi-tenant array objects before passing across network paths
-    const processingPayload = {
-      ...data,
-      estimateHours: Number(data.estimateHours) || 0,
-      assignees: data.assignees
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean),
+  const selectedUsers = watch("assignedIds") || [];
+
+  const { useCreateTaskBySprintId } = useBoard();
+
+  const { mutate: createTask, isPending } = useCreateTaskBySprintId(sprintId);
+  const { useGetTeams } = useUsers();
+  const { data: team, isLoading } = useGetTeams();
+  const toggleUser = (id: string) => {
+    const exists = selectedUsers.includes(id);
+
+    setValue(
+      "assignedIds",
+      exists ? selectedUsers.filter((u) => u !== id) : [...selectedUsers, id],
+    );
+  };
+
+  const handleFormSubmit = (data: TaskFormData) => {
+    const payload = {
+      title: data.title,
+      projectId,
+      description: data.description,
+      estimateHours: data.estimateHours
+        ? Number(data.estimateHours)
+        : undefined,
+      dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : undefined,
+      priority: data.priority,
+      assignedIds: data.assignedIds,
     };
-    await onSubmit(processingPayload);
-    reset();
-    onClose();
+
+    createTask(payload, {
+      onSuccess: () => {
+        reset();
+        onClose();
+      },
+    });
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 antialiased animate-in fade-in duration-200">
+      {/* Premium backdrop layer with fine blur glassmorphism */}
       <div
-        className="absolute inset-0 bg-zinc-900/40 backdrop-blur-xs"
+        className="absolute inset-0 bg-zinc-950/40 backdrop-blur-[4px] transition-opacity"
         onClick={onClose}
       />
 
-      <div className="relative w-full max-w-lg bg-white border border-zinc-200 shadow-2xl rounded-xl overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-200">
-        {/* Component Title Segment Bar */}
-        <div className="px-6 py-4 border-b border-zinc-100 flex items-center justify-between bg-white">
-          <div className="flex items-center gap-2.5">
-            <div className="h-9 w-9 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center">
-              <FileText className="h-4.5 w-4.5" />
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-zinc-900 tracking-tight">
-                Provision Backlog Task
-              </h2>
-              <p className="text-xs text-zinc-400">
-                Map executable deliverables down into sprint columns.
-              </p>
-            </div>
+      {/* Main Modal panel bounding container */}
+      <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col">
+        {/* Header segment context */}
+        <div className="flex items-center justify-between border-b border-zinc-100 bg-zinc-50/50 px-5 py-4">
+          <div>
+            <h2 className="text-sm font-bold text-zinc-900 tracking-tight">
+              Create Task Workspace
+            </h2>
+            <p className="text-[11px] text-zinc-500 font-medium mt-0.5">
+              Add task parameters with assignment routes & internal priority
+            </p>
           </div>
+
           <button
+            type="button"
             onClick={onClose}
-            className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 rounded-lg cursor-pointer transition-colors outline-none"
+            className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-lg transition-all cursor-pointer outline-none"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        {/* Task Attribute Grid Configuration Elements Form context */}
+        {/* Form elements matrix */}
         <form
           onSubmit={handleSubmit(handleFormSubmit)}
-          className="flex-1 overflow-y-auto p-6 space-y-4 bg-zinc-50/30"
+          className="space-y-4 p-5 overflow-y-auto max-h-[calc(85vh-100px)] custom-scrollbar"
         >
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-zinc-700 uppercase tracking-wider">
-              Task Title Header
+          {/* Title input row */}
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block">
+              Task Heading Title
             </label>
+
             <input
-              type="text"
-              placeholder="e.g., Integrate JWT Auth Middleware cookies routing"
               {...register("title", {
-                required: "Task tracking header identifier required",
+                required: "Task title context signature is required",
               })}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 bg-white text-zinc-900 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600"
+              className={`w-full rounded-lg border px-3 py-2 text-xs font-semibold text-zinc-900 placeholder-zinc-400 outline-none transition-all ${
+                errors.title
+                  ? "border-red-300 bg-red-50/20 focus:border-red-500 focus:ring-1 focus:ring-red-500/20"
+                  : "border-zinc-200 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600/10"
+              }`}
+              placeholder="e.g., Optimize cryptographic verification hooks"
             />
+
             {errors.title && (
-              <p className="text-xs text-red-600 font-semibold">
+              <p className="text-[10px] font-medium text-red-500 flex items-center gap-1 mt-1">
+                <AlertCircle className="h-3 w-3 text-red-500 shrink-0" />{" "}
                 {errors.title.message}
               </p>
             )}
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-zinc-700 uppercase tracking-wider">
-              Task Scope / Acceptance Criteria
+          {/* Description text component */}
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block">
+              Acceptance Criteria / Description
             </label>
+
             <textarea
+              {...register("description")}
+              className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-xs font-medium text-zinc-800 placeholder-zinc-400 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600/10 transition-all resize-none leading-relaxed"
               rows={3}
-              placeholder="State explicit edge cases, signature token lifecycles, and verification goals..."
-              {...register("description", {
-                required: "Explicit task description parameters required",
-              })}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 bg-white text-zinc-900 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 resize-none leading-relaxed"
+              placeholder="Provide a structural overview detailing explicit boundaries for this deliverable resource item..."
             />
-            {errors.description && (
-              <p className="text-xs text-red-600 font-semibold">
-                {errors.description.message}
-              </p>
-            )}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-zinc-700 uppercase tracking-wider flex items-center gap-1">
-                <Clock className="h-3.5 w-3.5 text-zinc-400" /> Estimate
-                Allocation (Hours)
+          {/* Effort Allocation Hours + Target Calendar Due Date */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 flex items-center gap-1">
+                <Clock className="h-3 w-3 text-zinc-400" /> Estimate (Hours)
               </label>
               <input
                 type="number"
-                placeholder="8"
-                {...register("estimateHours", { required: true, min: 1 })}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 bg-white text-zinc-900 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600"
+                step="0.5"
+                min="0"
+                {...register("estimateHours")}
+                placeholder="e.g., 12.5"
+                className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-xs font-semibold text-zinc-900 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600/10 transition-all"
               />
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-zinc-700 uppercase tracking-wider flex items-center gap-1">
-                <AlertCircle className="h-3.5 w-3.5 text-zinc-400" /> Priority
-                Weight Node
-              </label>
-              <select
-                {...register("priority")}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 bg-white text-zinc-900 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 cursor-pointer appearance-none"
-              >
-                <option value="LOW">Low Risk</option>
-                <option value="MEDIUM">Medium Standard</option>
-                <option value="HIGH">Critical Escalation / High</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-zinc-700 uppercase tracking-wider">
-                Target Node Delivery Date
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 flex items-center gap-1">
+                <Calendar className="h-3 w-3 text-zinc-400" /> Due Target Date
               </label>
               <input
                 type="date"
-                {...register("dueDate", {
-                  required: "Due date completion criteria required",
-                })}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 bg-white text-zinc-900 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 cursor-pointer"
+                {...register("dueDate")}
+                className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-xs font-semibold text-zinc-700 cursor-pointer outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600/10 transition-all bg-white"
               />
-              {errors.dueDate && (
-                <p className="text-xs text-red-600 font-semibold">
-                  {errors.dueDate.message}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-zinc-700 uppercase tracking-wider">
-                Assignee Vector Accounts
-              </label>
-              <input
-                type="text"
-                placeholder="e.g., Rayhan, Asif Rahman"
-                {...register("assignees", {
-                  required: "At least one worker target assignment is required",
-                })}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 bg-white text-zinc-900 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600"
-              />
-              {errors.assignees && (
-                <p className="text-xs text-red-600 font-semibold">
-                  {errors.assignees.message}
-                </p>
-              )}
             </div>
           </div>
 
-          {/* Core File Asset Upload Gateway Portal */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-zinc-700 uppercase tracking-wider">
-              Reference Attachments (PDF / Image)
+          {/* Priority lane tier drop container */}
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block">
+              Priority Classification
             </label>
-            <div className="border-2 border-dashed border-zinc-200 rounded-lg p-4 bg-white text-center hover:border-zinc-300 transition-colors relative group">
-              <input
-                type="file"
-                multiple
-                accept="image/*,application/pdf"
-                {...register("attachments")}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              />
-              <Paperclip className="h-5 w-5 text-zinc-400 mx-auto mb-1.5 group-hover:text-indigo-600 transition-colors" />
-              <p className="text-xs font-medium text-zinc-600">
-                Select local engineering documents or architecture layout
-                renders
-              </p>
-              <p className="text-[10px] text-zinc-400 mt-0.5">
-                Max footprint constraints apply per request block boundary
-              </p>
+
+            <select
+              {...register("priority")}
+              className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold text-zinc-800 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600/10 transition-all cursor-pointer"
+            >
+              <option value="LOW">Low Level Task</option>
+              <option value="MEDIUM">Medium Standard Bucket</option>
+              <option value="HIGH">High Urgent Escalation</option>
+            </select>
+          </div>
+
+          {/* Team Target Assignees Selection Stack */}
+          <div className="space-y-1.5 pt-1">
+            <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+              <Users className="h-3.5 w-3.5 text-zinc-400" />
+              Allocate Team Assignees
+            </div>
+
+            <div className="space-y-1.5 mt-2 bg-zinc-50 p-2 border border-zinc-200/60 rounded-xl max-h-[160px] overflow-y-auto custom-scrollbar">
+              {team!.map((u: Team) => {
+                const active = selectedUsers.includes(u.id);
+
+                return (
+                  <button
+                    type="button"
+                    key={u.id}
+                    onClick={() => toggleUser(u.id)}
+                    className={`flex w-full items-center justify-between rounded-lg border px-3 py-2 text-[11px] font-semibold transition-all cursor-pointer select-none outline-none ${
+                      active
+                        ? "border-indigo-600 bg-indigo-50/80 text-indigo-900 shadow-xs ring-1 ring-indigo-600/10"
+                        : "border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 hover:text-zinc-900"
+                    }`}
+                  >
+                    <span className="truncate">{u.email}</span>
+
+                    {active && (
+                      <span className="text-[9px] font-extrabold bg-indigo-600 text-white px-2 py-0.5 rounded-md tracking-wider shadow-xs scale-95 transition-transform animate-in zoom-in-90 duration-100 shrink-0">
+                        ACTIVE ASSIGNEE
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          {/* Action Trigger base bar control group wrapper */}
-          <div className="pt-4 border-t border-zinc-100 flex items-center justify-end gap-3 bg-white -mx-6 -mb-6 p-4">
+          {/* Footer operational trigger block */}
+          <div className="flex justify-end items-center gap-2 border-t border-zinc-100 pt-4 mt-2">
             <button
               type="button"
               onClick={onClose}
-              disabled={isPending}
-              className="px-4 py-2 text-xs font-bold text-zinc-600 hover:text-zinc-900 bg-white border border-zinc-200 rounded-lg transition-colors cursor-pointer outline-none"
+              className="rounded-lg border border-zinc-200 px-3.5 py-2 text-xs font-bold text-zinc-600 hover:text-zinc-900 bg-white hover:bg-zinc-50 hover:border-zinc-300 transition-colors cursor-pointer outline-none"
             >
               Cancel
             </button>
+
             <button
               type="submit"
               disabled={isPending}
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg shadow-xs transition-colors outline-none cursor-pointer"
+              className="min-w-[110px] flex items-center justify-center gap-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 disabled:bg-zinc-400 text-xs font-bold text-white transition-colors cursor-pointer shadow-sm outline-none px-4 py-2"
             >
               {isPending ? (
-                <>
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Committing...
-                </>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : (
                 <>
-                  <Plus className="h-3.5 w-3.5" /> Append To Sprint Backlog
+                  <Plus className="h-3.5 w-3.5" /> Commit Task
                 </>
               )}
             </button>

@@ -1,4 +1,5 @@
 "use client";
+
 import { useForm } from "react-hook-form";
 import {
   X,
@@ -8,6 +9,8 @@ import {
   FolderPlus,
   Loader2,
 } from "lucide-react";
+
+import { useProject } from "@/features/projects/hooks/useProject";
 
 export interface ProjectFormData {
   title: string;
@@ -23,16 +26,14 @@ export interface ProjectFormData {
 interface CreateProjectModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: ProjectFormData) => Promise<void>;
-  isPending?: boolean;
 }
 
 export default function CreateProjectModal({
   isOpen,
   onClose,
-  onSubmit,
-  isPending = false,
 }: CreateProjectModalProps) {
+  const { createProject, isCreatingProject, errorText } = useProject();
+
   const {
     register,
     handleSubmit,
@@ -46,43 +47,68 @@ export default function CreateProjectModal({
   });
 
   const handleFormSubmit = async (data: ProjectFormData) => {
-    // Transform stringified numeric data gracefully back into standard numeric float structures
     const formattedPayload = {
       ...data,
+
       budget: Number(data.budget) || 0,
+
+      // convert date -> ISO string
+      startDate: new Date(data.startDate).toISOString(),
+
+      endDate: data.endDate ? new Date(data.endDate).toISOString() : undefined,
+
+      // backend field name
+      thumbnail: data.thumbnailUrl || "",
+
+      // status mapping
+      status:
+        data.status === "planned"
+          ? "PLANNED"
+          : data.status === "active"
+            ? "ACTIVE"
+            : data.status === "completed"
+              ? "COMPLETED"
+              : "ARCHIVED",
     };
-    await onSubmit(formattedPayload);
-    reset();
-    onClose();
+
+    createProject(formattedPayload, {
+      onSuccess: () => {
+        reset();
+        onClose();
+      },
+    });
   };
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-      {/* Structural Modal Backdrop Screen click barrier */}
+      {/* Backdrop */}
       <div
         className="absolute inset-0 bg-zinc-900/40 backdrop-blur-xs"
         onClick={onClose}
       />
 
-      {/* Structural Central Control Card Form Container */}
+      {/* Modal */}
       <div className="relative w-full max-w-xl bg-white border border-zinc-200 shadow-2xl rounded-xl overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-200">
-        {/* Form Modal Layout Header Bar */}
+        {/* Header */}
         <div className="px-6 py-4 border-b border-zinc-100 flex items-center justify-between bg-white">
           <div className="flex items-center gap-2.5">
             <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
               <FolderPlus className="h-4.5 w-4.5" />
             </div>
+
             <div>
               <h2 className="text-base font-bold text-zinc-900 tracking-tight">
-                Provision Project Node
+                Create Project
               </h2>
+
               <p className="text-xs text-zinc-400">
-                Initialize a workspace context repository across sytem layers.
+                Initialize a new project workspace.
               </p>
             </div>
           </div>
+
           <button
             type="button"
             onClick={onClose}
@@ -92,85 +118,91 @@ export default function CreateProjectModal({
           </button>
         </div>
 
-        {/* Dynamic Form Payload Elements Section */}
+        {/* Form */}
         <form
           onSubmit={handleSubmit(handleFormSubmit)}
           className="flex-1 overflow-y-auto p-6 space-y-4 bg-zinc-50/30"
         >
+          {/* Error */}
+          {errorText && (
+            <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-600">
+              {errorText}
+            </div>
+          )}
+
+          {/* Title + Client */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-zinc-700 uppercase tracking-wider">
                 Project Title
               </label>
+
               <input
                 type="text"
-                placeholder="e.g., Ledger Vault Core API"
+                placeholder="Project title"
                 {...register("title", {
-                  required: "Project title identifier context is required",
+                  required: "Project title is required",
                 })}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 bg-white text-zinc-900 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600"
+                className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 bg-white outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600"
               />
+
               {errors.title && (
-                <p className="text-xs text-red-600 font-semibold">
-                  {errors.title.message}
-                </p>
+                <p className="text-xs text-red-600">{errors.title.message}</p>
               )}
             </div>
 
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-zinc-700 uppercase tracking-wider">
-                Corporate Client
+                Client
               </label>
+
               <input
                 type="text"
-                placeholder="e.g., DataPollex Limited"
+                placeholder="Client name"
                 {...register("client", {
-                  required: "Client verification entity is required",
+                  required: "Client name is required",
                 })}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 bg-white text-zinc-900 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600"
+                className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 bg-white outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600"
               />
+
               {errors.client && (
-                <p className="text-xs text-red-600 font-semibold">
-                  {errors.client.message}
-                </p>
+                <p className="text-xs text-red-600">{errors.client.message}</p>
               )}
             </div>
           </div>
 
+          {/* Description */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-zinc-700 uppercase tracking-wider">
-              Scope / Description Parameters
+              Description
             </label>
+
             <textarea
               rows={3}
-              placeholder="Detail overall technical baseline constraints, deployment milestones, and architecture rules..."
-              {...register("description", {
-                required: "Scope description context metrics are required",
-              })}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 bg-white text-zinc-900 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 resize-none leading-relaxed"
+              placeholder="Project description..."
+              {...register("description")}
+              className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 bg-white outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 resize-none"
             />
-            {errors.description && (
-              <p className="text-xs text-red-600 font-semibold">
-                {errors.description.message}
-              </p>
-            )}
           </div>
 
+          {/* Dates */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-zinc-700 uppercase tracking-wider flex items-center gap-1">
-                <Calendar className="h-3.5 w-3.5 text-zinc-400" /> Start Cycle
-                Date
+                <Calendar className="h-3.5 w-3.5 text-zinc-400" />
+                Start Date
               </label>
+
               <input
                 type="date"
                 {...register("startDate", {
-                  required: "Initialization timeline marker required",
+                  required: "Start date is required",
                 })}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 bg-white text-zinc-900 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 cursor-pointer"
+                className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 bg-white outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600"
               />
+
               {errors.startDate && (
-                <p className="text-xs text-red-600 font-semibold">
+                <p className="text-xs text-red-600">
                   {errors.startDate.message}
                 </p>
               )}
@@ -178,92 +210,92 @@ export default function CreateProjectModal({
 
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-zinc-700 uppercase tracking-wider flex items-center gap-1">
-                <Calendar className="h-3.5 w-3.5 text-zinc-400" /> End Target
-                Date
+                <Calendar className="h-3.5 w-3.5 text-zinc-400" />
+                End Date
               </label>
+
               <input
                 type="date"
-                {...register("endDate", {
-                  required: "Completion target metric required",
-                })}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 bg-white text-zinc-900 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 cursor-pointer"
+                {...register("endDate")}
+                className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 bg-white outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600"
               />
-              {errors.endDate && (
-                <p className="text-xs text-red-600 font-semibold">
-                  {errors.endDate.message}
-                </p>
-              )}
             </div>
           </div>
 
+          {/* Budget + Status */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-zinc-700 uppercase tracking-wider flex items-center gap-1">
-                <DollarSign className="h-3.5 w-3.5 text-zinc-400" /> Financial
-                Budget Capacity
+                <DollarSign className="h-3.5 w-3.5 text-zinc-400" />
+                Budget
               </label>
+
               <input
                 type="number"
-                placeholder="e.g., 65000"
+                placeholder="5000"
                 {...register("budget", {
-                  required: "Financial point values are required",
                   min: 0,
                 })}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 bg-white text-zinc-900 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600"
+                className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 bg-white outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600"
               />
             </div>
 
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-zinc-700 uppercase tracking-wider">
-                Operational Lifecycle State
+                Status
               </label>
+
               <select
                 {...register("status")}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 bg-white text-zinc-900 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 cursor-pointer appearance-none"
+                className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 bg-white outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600"
               >
-                <option value="planned">Planned Capacity</option>
-                <option value="active">Active Execution</option>
-                <option value="completed">Completed / Dispatched</option>
-                <option value="archived">Archived Node</option>
+                <option value="planned">Planned</option>
+                <option value="active">Active</option>
+                <option value="completed">Completed</option>
+                <option value="archived">Archived</option>
               </select>
             </div>
           </div>
 
+          {/* Thumbnail */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-zinc-700 uppercase tracking-wider">
-              Repository Thumbnail Vector URL (Optional)
+              Thumbnail URL
             </label>
+
             <input
               type="url"
-              placeholder="https://images.datapollex.com/vector-asset.png"
+              placeholder="https://example.com/image.png"
               {...register("thumbnailUrl")}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 bg-white text-zinc-900 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 bg-white outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600"
             />
           </div>
 
-          {/* Form Action Controls Base Bar */}
+          {/* Footer */}
           <div className="pt-4 border-t border-zinc-100 flex items-center justify-end gap-3 bg-white -mx-6 -mb-6 p-4">
             <button
               type="button"
               onClick={onClose}
-              disabled={isPending}
-              className="px-4 py-2 text-xs font-bold text-zinc-600 hover:text-zinc-900 bg-white border border-zinc-200 rounded-lg transition-colors cursor-pointer outline-none disabled:opacity-50"
+              disabled={isCreatingProject}
+              className="px-4 py-2 text-xs font-bold text-zinc-600 hover:text-zinc-900 bg-white border border-zinc-200 rounded-lg transition-colors"
             >
               Cancel
             </button>
+
             <button
               type="submit"
-              disabled={isPending}
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg shadow-xs cursor-pointer select-none transition-colors outline-none disabled:bg-zinc-300"
+              disabled={isCreatingProject}
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-colors disabled:bg-zinc-300"
             >
-              {isPending ? (
+              {isCreatingProject ? (
                 <>
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />{" "}
-                  Provisioning...
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Creating...
                 </>
               ) : (
                 <>
-                  <Plus className="h-3.5 w-3.5" /> Initialize Project Context
+                  <Plus className="h-3.5 w-3.5" />
+                  Create Project
                 </>
               )}
             </button>

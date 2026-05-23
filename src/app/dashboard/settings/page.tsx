@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   User,
   Building,
@@ -12,7 +11,6 @@ import {
   CheckCircle2,
   Globe,
   Terminal,
-  Smartphone,
 } from "lucide-react";
 import { clsx } from "clsx";
 
@@ -56,30 +54,8 @@ export default function SettingsPage() {
     }
   }, []);
 
-  // Structural update mutation via simulated client-side network latency
-  const updateSettingsMutation = useMutation({
-    mutationFn: async (updatedData: UserProfile) => {
-      await new Promise((resolve) => setTimeout(resolve, 800)); // Latency Simulation
-      return updatedData;
-    },
-    onSuccess: (data) => {
-      setSaveSuccess(true);
-      // Sync mutations back down to local configuration stores
-      const existingUser = localStorage.getItem("mpms_user");
-      if (existingUser) {
-        const parsed = JSON.parse(existingUser);
-        localStorage.setItem(
-          "mpms_user",
-          JSON.stringify({ ...parsed, name: data.name, email: data.email }),
-        );
-      }
-      setTimeout(() => setSaveSuccess(false), 3000);
-    },
-  });
-
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateSettingsMutation.mutate(profile);
   };
 
   const tabs = [
@@ -302,10 +278,9 @@ export default function SettingsPage() {
 
               <button
                 type="submit"
-                disabled={updateSettingsMutation.isPending}
                 className="inline-flex items-center gap-2 px-4 py-2 bg-brand-primary hover:bg-brand-hover disabled:bg-zinc-300 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors cursor-pointer outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary disabled:cursor-not-allowed"
               >
-                {updateSettingsMutation.isPending ? (
+                {false ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <>

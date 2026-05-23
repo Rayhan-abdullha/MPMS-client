@@ -8,6 +8,14 @@ export function proxy(request: NextRequest) {
   const isDashboardRoute = pathname.startsWith("/dashboard");
   const isAuthRoute = pathname.startsWith("/auth");
 
+  if (token && pathname === "/") {
+    return NextResponse.redirect(new URL("/dashboard/projects", request.url));
+  }
+
+  if (!token && pathname === "/") {
+    return NextResponse.redirect(new URL("/auth/login", request.url));
+  }
+
   /**
    * ❗ If not logged in → block dashboard
    */
@@ -26,5 +34,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/auth/:path*"],
+  matcher: ["/dashboard/:path*", "/auth/:path*", "/"],
 };

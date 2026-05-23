@@ -1,4 +1,4 @@
-import KanbanBoard from "@/features/board/components/KanbanBoard";
+import AllProjectSprints from "@/features/board/components/AllSprint";
 
 export const metadata = {
   title: "Sprint Board | Enterprise Engine",
@@ -7,5 +7,5 @@ export const metadata = {
 };
 
 export default function SprintBoardPage() {
-  return <KanbanBoard />;
+  return <AllProjectSprints />;
 }

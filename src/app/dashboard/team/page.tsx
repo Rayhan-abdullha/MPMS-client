@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { api } from "@/utils/api";
 import {
   Users,
@@ -17,93 +17,38 @@ import {
   X,
 } from "lucide-react";
 import { clsx } from "clsx";
+import { useUsers } from "@/features/user/hooks/useUsers";
 
 interface TeamMember {
   id: string;
   name: string;
   email: string;
-  role: "OWNER" | "ADMIN" | "MEMBER" | "GUEST";
-  status: "ACTIVE" | "IDLE" | "OFFLINE";
-  lastActive: string;
+  role: "ADMIN" | "MEMBER" | "MANAGER";
+  isActive: boolean;
   tasksCompleted: number;
   activeSprints: number;
 }
-
-const mockTeam: TeamMember[] = [
-  {
-    id: "m-1",
-    name: "Rayhan",
-    email: "developer@rayhanfoods.com",
-    role: "OWNER",
-    status: "ACTIVE",
-    lastActive: "Just now",
-    tasksCompleted: 42,
-    activeSprints: 3,
-  },
-  {
-    id: "m-2",
-    name: "Asif Rahman",
-    email: "asif@performance-engine.io",
-    role: "ADMIN",
-    status: "ACTIVE",
-    lastActive: "5m ago",
-    tasksCompleted: 28,
-    activeSprints: 3,
-  },
-  {
-    id: "m-3",
-    name: "Nisha Sultana",
-    email: "nisha@dev.net",
-    role: "MEMBER",
-    status: "IDLE",
-    lastActive: "42m ago",
-    tasksCompleted: 19,
-    activeSprints: 2,
-  },
-  {
-    id: "m-4",
-    name: "Fahim Ahmed",
-    email: "fahim@partner-node.org",
-    role: "GUEST",
-    status: "OFFLINE",
-    lastActive: "2 days ago",
-    tasksCompleted: 4,
-    activeSprints: 1,
-  },
-];
 
 export default function TeamAdministrationPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("ALL");
 
-  // Query mapping team members configuration state arrays
-  const { data: teamMembers } = useQuery<TeamMember[]>({
-    queryKey: ["workspace_team"],
-    queryFn: async () => {
-      try {
-        const res = await api.get("/team");
-        return res.data?.data || mockTeam;
-      } catch (err) {
-        return mockTeam;
-      }
-    },
-  });
+  const { useGetTeams } = useUsers();
+  const { data: teamMembers } = useGetTeams();
 
-  const getStatusColor = (status: TeamMember["status"]) => {
+  const getStatusColor = (status: boolean) => {
     const schemas = {
       ACTIVE: "bg-emerald-500 ring-emerald-100",
-      IDLE: "bg-amber-500 ring-amber-100",
       OFFLINE: "bg-zinc-400 ring-zinc-100",
     };
-    return schemas[status];
+    return status ? schemas["ACTIVE"] : schemas["OFFLINE"];
   };
 
   const getRoleBadgeStyles = (role: TeamMember["role"]) => {
     const schemas = {
-      OWNER: "bg-indigo-50 text-indigo-700 border-indigo-100",
+      MANAGER: "bg-blue-50 text-blue-700 border-blue-100",
       ADMIN: "bg-purple-50 text-purple-700 border-purple-100",
-      MEMBER: "bg-blue-50 text-blue-700 border-blue-100",
-      GUEST: "bg-zinc-100 text-zinc-700 border-zinc-200",
+      MEMBER: "bg-indigo-50 text-indigo-700 border-indigo-100",
     };
     return schemas[role];
   };
@@ -155,10 +100,9 @@ export default function TeamAdministrationPage() {
             className="px-3 py-1.5 rounded-lg border border-premium-border bg-white text-sm outline-none font-medium text-zinc-700 cursor-pointer"
           >
             <option value="ALL">All Roles</option>
-            <option value="OWNER">Owner Nodes</option>
-            <option value="ADMIN">Administrators</option>
-            <option value="MEMBER">Standard Members</option>
-            <option value="GUEST">Guest Clusters</option>
+            <option value="MANAGER">Manager</option>
+            <option value="MEMBER">Member</option>
+            <option value="ADMIN">Admin</option>
           </select>
         </div>
       </div>
@@ -181,7 +125,7 @@ export default function TeamAdministrationPage() {
                   <span
                     className={clsx(
                       "absolute bottom-0 right-0 h-3 w-3 rounded-full ring-2 text-white flex items-center justify-center",
-                      getStatusColor(member.status),
+                      getStatusColor(member.isActive),
                     )}
                   />
                 </div>
@@ -199,7 +143,7 @@ export default function TeamAdministrationPage() {
               </div>
 
               {/* Roster Descriptive Identity Section */}
-              <h3 className="text-base font-bold text-zinc-900 tracking-tight">
+              <h3 className="text-base capitalize font-bold text-zinc-900 tracking-tight">
                 {member.name}
               </h3>
               <p className="text-xs text-premium-textMuted flex items-center gap-1.5 mt-1 font-mono">
@@ -213,18 +157,20 @@ export default function TeamAdministrationPage() {
                 <span className="block text-[10px] uppercase font-bold tracking-wider text-premium-textMuted">
                   Task Units
                 </span>
+                {/* TODO */}
                 <span className="text-base font-bold text-zinc-900 flex items-center justify-center gap-1 mt-0.5">
                   <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />{" "}
-                  {member.tasksCompleted}
+                  {1}{" "}
                 </span>
               </div>
               <div className="bg-zinc-50/60 border border-zinc-200/40 rounded-lg p-2">
                 <span className="block text-[10px] uppercase font-bold tracking-wider text-premium-textMuted">
                   Last Ping
                 </span>
+                {/* // TODO */}
                 <span className="text-xs font-semibold text-zinc-700 flex items-center justify-center gap-1 mt-1.5">
                   <Clock className="h-3.5 w-3.5 text-zinc-400" />{" "}
-                  {member.lastActive}
+                  {"1 hour ago"}{" "}
                 </span>
               </div>
             </div>

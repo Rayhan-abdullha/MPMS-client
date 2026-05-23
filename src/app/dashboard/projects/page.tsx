@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import CreateProjectModal, {
-  ProjectFormData,
-} from "@/features/projects/components/CreateProjectModal";
+import CreateProjectModal from "@/features/projects/components/CreateProjectModal";
+import { useProject } from "@/features/projects/hooks/useProject";
+
 import {
   Briefcase,
   Plus,
@@ -15,6 +15,7 @@ import {
   ArrowRight,
   UserCheck,
 } from "lucide-react";
+
 import { clsx } from "clsx";
 
 interface ProjectNode {
@@ -26,52 +27,12 @@ interface ProjectNode {
   endDate: string;
   budget: number;
   status: "planned" | "active" | "completed" | "archived";
-  thumbnailUrl?: string;
+  thumbnail?: string;
   stats: {
     tasksTotal: number;
     tasksCompleted: number;
   };
 }
-
-// Demo Data Only
-const mockProjects: ProjectNode[] = [
-  {
-    id: "p-1",
-    title: "Minimal Project Management Engine",
-    client: "DataPollex Limited",
-    description:
-      "Construct a unified edge core handling multi-tenant agile task streams, RBAC middle proxies, and performance chart components.",
-    startDate: "2026-05-10",
-    endDate: "2026-06-15",
-    budget: 45000,
-    status: "active",
-    stats: { tasksTotal: 14, tasksCompleted: 9 },
-  },
-  {
-    id: "p-2",
-    title: "High-Concurrency Processing Hub",
-    client: "Alien Technologies Corp",
-    description:
-      "Isolate ledger node tracking architectures across remote cluster environments with zero synchronization lock debt.",
-    startDate: "2026-07-01",
-    endDate: "2026-09-30",
-    budget: 120000,
-    status: "planned",
-    stats: { tasksTotal: 8, tasksCompleted: 0 },
-  },
-  {
-    id: "p-3",
-    title: "Enterprise Analytics Dashboard",
-    client: "Nova Dynamics",
-    description:
-      "Develop scalable visualization pipelines for operational intelligence metrics and KPI aggregation systems.",
-    startDate: "2026-04-15",
-    endDate: "2026-08-20",
-    budget: 78000,
-    status: "completed",
-    stats: { tasksTotal: 24, tasksCompleted: 24 },
-  },
-];
 
 export default function UnifiedProjectsDirectoryPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -81,7 +42,10 @@ export default function UnifiedProjectsDirectoryPage() {
     "MEMBER",
   );
 
-  // Demo session handling
+  const { useGetProjects } = useProject();
+  const { data, isLoading } = useGetProjects();
+
+  // session role
   useEffect(() => {
     try {
       const storedUser = localStorage.getItem("mpms_user");
@@ -94,22 +58,28 @@ export default function UnifiedProjectsDirectoryPage() {
         }
       }
     } catch (e) {
-      console.warn("Session extraction context error:", e);
+      console.warn("Session extraction error:", e);
     }
   }, []);
 
-  // Management access gate
   const isManagementTier = userRole === "ADMIN" || userRole === "MANAGER";
 
-  // Local demo data
-  const projects = mockProjects;
-
-  // Local project create simulation
-  const handleCreateProject = async (data: ProjectFormData) => {
-    console.log("Demo Project Submitted:", data);
-
-    setIsModalOpen(false);
-  };
+  const projects: ProjectNode[] =
+    (data?.projects || []).map((p: any) => ({
+      id: p.id,
+      title: p.title,
+      client: p.client,
+      description: p.description,
+      startDate: p.startDate,
+      endDate: p.endDate,
+      budget: p.budget,
+      status: p.status.toLowerCase(),
+      thumbnail: p.thumbnail,
+      stats: {
+        tasksTotal: p._count?.tasks ?? 0,
+        tasksCompleted: 0,
+      },
+    })) || [];
 
   const getStatusBadgeStyles = (status: ProjectNode["status"]) => {
     const schemas = {
@@ -122,7 +92,6 @@ export default function UnifiedProjectsDirectoryPage() {
     return schemas[status];
   };
 
-  // Filtering logic
   const filteredProjects = projects.filter((project) => {
     const matchesSearch =
       project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -175,7 +144,6 @@ export default function UnifiedProjectsDirectoryPage() {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-9 pr-4 py-2 rounded-lg border border-zinc-200 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white text-zinc-900"
           />
-
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-400" />
         </div>
 
@@ -196,11 +164,16 @@ export default function UnifiedProjectsDirectoryPage() {
         </div>
       </div>
 
-      {/* Project Grid */}
-      {filteredProjects.length === 0 ? (
+      {/* Grid */}
+      {isLoading ? (
+        <div className="text-center py-12 border border-dashed border-zinc-200 rounded-xl bg-zinc-50/50">
+          <p className="text-sm font-medium text-zinc-600">
+            Loading projects...
+          </p>
+        </div>
+      ) : filteredProjects.length === 0 ? (
         <div className="text-center py-12 border border-dashed border-zinc-200 rounded-xl bg-zinc-50/50">
           <Briefcase className="h-8 w-8 text-zinc-300 mx-auto mb-2" />
-
           <p className="text-sm font-medium text-zinc-600">
             No workspace repositories found.
           </p>
@@ -222,7 +195,6 @@ export default function UnifiedProjectsDirectoryPage() {
                 className="bg-white border border-zinc-200 hover:border-zinc-300 rounded-xl p-5 shadow-xs flex flex-col justify-between transition-all hover:shadow-sm group"
               >
                 <div>
-                  {/* Header */}
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div>
                       <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block font-mono">
@@ -244,15 +216,12 @@ export default function UnifiedProjectsDirectoryPage() {
                     </span>
                   </div>
 
-                  {/* Description */}
                   <p className="text-xs text-zinc-500 leading-relaxed line-clamp-3 mb-5">
                     {project.description}
                   </p>
                 </div>
 
-                {/* Footer */}
                 <div className="space-y-4 pt-4 border-t border-zinc-100">
-                  {/* Progress */}
                   <div className="space-y-1.5">
                     <div className="flex justify-between items-center text-xs font-semibold">
                       <span className="text-zinc-500 flex items-center gap-1">
@@ -274,25 +243,21 @@ export default function UnifiedProjectsDirectoryPage() {
                     </div>
                   </div>
 
-                  {/* Budget + Link */}
                   <div className="flex items-center justify-between gap-2 pt-1">
                     <div className="text-xs font-semibold text-zinc-600 flex items-center gap-0.5">
                       <DollarSign className="h-3.5 w-3.5 text-zinc-400" />
-
-                      <span>
-                        Budget:{" "}
-                        <span className="text-zinc-900 font-bold font-mono">
-                          ${project.budget.toLocaleString()}
-                        </span>
+                      Budget:{" "}
+                      <span className="text-zinc-900 font-bold font-mono">
+                        ${project.budget.toLocaleString()}
                       </span>
                     </div>
 
                     <Link
                       href={`/dashboard/projects/${project.id}`}
-                      className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-700 transition-colors group/link"
+                      className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-700 transition-colors"
                     >
                       Enter Workspace
-                      <ArrowRight className="h-3 w-3 transform group-hover/link:translate-x-0.5 transition-transform" />
+                      <ArrowRight className="h-3 w-3" />
                     </Link>
                   </div>
                 </div>
@@ -306,8 +271,6 @@ export default function UnifiedProjectsDirectoryPage() {
       <CreateProjectModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSubmit={handleCreateProject}
-        isPending={false}
       />
     </div>
   );
