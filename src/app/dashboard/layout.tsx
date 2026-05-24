@@ -26,7 +26,7 @@ interface SidebarItem {
 const navigationItems: SidebarItem[] = [
   { name: "Projects", href: "/dashboard/projects", icon: FolderGit2 },
   { name: "Sprints & Board", href: "/dashboard/board", icon: Layers },
-  { name: "My Tasks", href: "/dashboard/tasks", icon: CheckSquare },
+  { name: "My Tasks", href: "/dashboard/my-task", icon: CheckSquare },
   { name: "Team Members", href: "/dashboard/team", icon: Users },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];

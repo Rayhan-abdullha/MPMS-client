@@ -9,8 +9,8 @@ export const createTaskSchema = z.object({
     .string()
     .min(10, { message: "Description must be at least 10 characters long" })
     .max(500, { message: "Description cannot exceed 500 characters" }),
-  priority: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"], {
-    errorMap: () => ({ message: "Please select a valid priority level" }),
+  priority: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"] as const, {
+    message: "Please select a valid priority level",
   }),
   columnId: z
     .string()

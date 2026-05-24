@@ -1,99 +1,154 @@
-// components/TaskCard.tsx
+"use client";
 
 import { Draggable } from "@hello-pangea/dnd";
-import {
-  MessageSquare,
-  Paperclip,
-  User,
-} from "lucide-react";
-
-import { clsx } from "clsx";
+import { useState } from "react";
+import { Clock, Calendar, MessageSquare, Check, Edit2, X } from "lucide-react";
+import { Task, useBoard } from "../hooks/useBoard";
 
 interface Props {
-  task: any;
+  task: Task;
   index: number;
+  sprintId: string;
+  onViewDetails: (task: Task) => void;
 }
-
-const getPriorityStyles = (priority: string) => {
-  const schemas: Record<string, string> = {
-    CRITICAL: "bg-red-50 text-red-700 border-red-100",
-    HIGH: "bg-amber-50 text-amber-700 border-amber-100",
-    MEDIUM: "bg-indigo-50 text-indigo-700 border-indigo-100",
-    LOW: "bg-zinc-100 text-zinc-600 border-zinc-200",
-  };
-
-  return schemas[priority] || schemas.LOW;
-};
 
 export default function TaskCard({
   task,
   index,
+  sprintId,
+  onViewDetails,
 }: Props) {
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [inlineTitle, setInlineTitle] = useState(task.title);
+  const { useUpdateTaskDetails } = useBoard();
+  const { mutate: updateDetails } = useUpdateTaskDetails(sprintId);
 
-    
+  const handleSaveTitle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (inlineTitle.trim() && inlineTitle !== task.title) {
+      updateDetails({ taskId: task.id, payload: { title: inlineTitle } });
+    }
+    setIsEditingTitle(false);
+  };
+
+  const priorityColors = {
+    LOW: "bg-zinc-100 text-zinc-700 border-zinc-200",
+    MEDIUM: "bg-amber-50 text-amber-700 border-amber-200",
+    HIGH: "bg-red-50 text-red-700 border-red-200",
+  };
+
   return (
-    <Draggable
-      draggableId={task.id}
-      index={index}
-    >
+    <Draggable draggableId={task.id} index={index}>
       {(provided, snapshot) => (
         <div
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
-          style={provided.draggableProps.style}
-          className={clsx(
-            "bg-white border rounded-xl p-4",
+          onClick={() => !isEditingTitle && onViewDetails(task)}
+          className={`p-4 rounded-xl border bg-white border-zinc-200 shadow-xs hover:border-zinc-300 transition-all select-none group flex flex-col gap-2.5 relative ${
             snapshot.isDragging
-              ? "border-indigo-600 shadow-md"
-              : "border-zinc-200"
-          )}
+              ? "shadow-xl ring-2 ring-indigo-600/10 border-indigo-500"
+              : ""
+          }`}
         >
-          <div>
-            <div className="flex items-start justify-between mb-2">
-              <span
-                className={clsx(
-                  "px-2 py-0.5 text-[10px] font-bold border rounded-md uppercase",
-                  getPriorityStyles(task.priority)
-                )}
-              >
-                {task.priority}
-              </span>
-
-              <span className="text-[11px] text-zinc-400 font-mono">
-                #{task.id}
-              </span>
+          <div className="flex items-center justify-between gap-2">
+            <span
+              className={`px-2 py-0.5 font-bold font-mono text-[9px] border rounded-md uppercase tracking-wider ${priorityColors[task.priority]}`}
+            >
+              {task.priority}
+            </span>
+            <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+              {isEditingTitle ? (
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={handleSaveTitle}
+                    className="p-1 hover:bg-emerald-50 text-emerald-600 rounded"
+                  >
+                    <Check className="h-3 w-3" />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsEditingTitle(false);
+                    }}
+                    className="p-1 hover:bg-zinc-100 text-zinc-400 rounded"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsEditingTitle(true);
+                  }}
+                  className="p-1 hover:bg-zinc-50 text-zinc-400 hover:text-zinc-700 rounded"
+                >
+                  <Edit2 className="h-3 w-3" />
+                </button>
+              )}
             </div>
-
-            <h4 className="text-sm font-bold">
-              {task.title}
-            </h4>
-
-            <p className="text-xs text-zinc-500 mt-1">
-              {task.description}
-            </p>
           </div>
 
-          <div className="mt-4 pt-3 border-t flex items-center justify-between">
-            <div className="flex items-center gap-2 text-zinc-400">
-              <div className="flex items-center gap-1 text-[11px]">
-                <MessageSquare className="h-3.5 w-3.5" />
-                <span>2</span>
-              </div>
+          {isEditingTitle ? (
+            <input
+              type="text"
+              value={inlineTitle}
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => setInlineTitle(e.target.value)}
+              className="w-full px-2 py-1 text-xs border rounded outline-none focus:border-indigo-600 font-semibold"
+              autoFocus
+            />
+          ) : (
+            <h4 className="text-xs sm:text-sm font-bold text-zinc-900 leading-snug group-hover:text-indigo-600 transition-colors">
+              {task.title}
+            </h4>
+          )}
 
-              <div className="flex items-center gap-1 text-[11px]">
-                <Paperclip className="h-3.5 w-3.5" />
-                <span>1</span>
-              </div>
+          {task.description && (
+            <p className="text-[11px] text-zinc-400 line-clamp-2 leading-relaxed">
+              {task.description}
+            </p>
+          )}
+
+          <div className="pt-2.5 border-t border-zinc-100 flex items-center justify-between text-[10px] text-zinc-400 font-medium">
+            <div className="flex items-center gap-2">
+              {task.estimateHours && (
+                <span className="flex items-center gap-0.5 font-mono">
+                  <Clock className="h-3 w-3 text-zinc-300" />{" "}
+                  {task.estimateHours}h
+                </span>
+              )}
+              {task.dueDate && (
+                <span className="flex items-center gap-0.5 font-mono">
+                  <Calendar className="h-3 w-3 text-zinc-300" />{" "}
+                  {new Date(task.dueDate).toLocaleDateString(undefined, {
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </span>
+              )}
             </div>
 
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-medium">
-                {task.assignee?.name}
-              </span>
-
-              <div className="h-6 w-6 rounded-full bg-zinc-100 border flex items-center justify-center">
-                <User className="h-3 w-3" />
+            <div className="flex items-center gap-3">
+              {task.comments && task.comments.length > 0 && (
+                <span className="flex items-center gap-0.5">
+                  <MessageSquare className="h-3 w-3 text-zinc-300" />{" "}
+                  {task.comments.length}
+                </span>
+              )}
+              <div className="flex -space-x-1 overflow-hidden">
+                {task.assignedUsers?.map((u) => (
+                  <div
+                    key={u.id}
+                    title={u.email}
+                    className="h-4.5 w-4.5 rounded-full border border-white bg-zinc-100 text-[8px] font-bold text-zinc-600 flex items-center justify-center ring-1 ring-zinc-200"
+                  >
+                    {u.name
+                      ? u.name.substring(0, 2).toUpperCase()
+                      : u.email.substring(0, 2).toUpperCase()}
+                  </div>
+                ))}
               </div>
             </div>
           </div>

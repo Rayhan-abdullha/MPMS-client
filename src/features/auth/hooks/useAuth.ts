@@ -37,7 +37,7 @@ export const useAuth = () => {
       return data;
     },
     onSuccess: (response) => {
-      router.push("/login");
+      router.push("/auth/login");
     },
     onError: (err: any) => {
       setErrorText(
