@@ -4,8 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { api } from "@/utils/api";
 import { LoginPayload, RegisterPayload, AuthResponse } from "../auth.types";
-import { useEffect, useState } from "react";
-import Cookies from "js-cookie";
+import { useState } from "react";
 
 export const useAuth = () => {
   const router = useRouter();
@@ -20,6 +19,7 @@ export const useAuth = () => {
     },
     onSuccess: (response) => {
       localStorage.setItem("mpms_user", JSON.stringify(response.data.user));
+      localStorage.setItem("mpms_auth_token", response.data.accessToken);
       queryClient.setQueryData(["current_user"], response.data.user);
       router.push("/dashboard/projects");
     },
@@ -63,9 +63,9 @@ export const useAuth = () => {
   });
 
   return {
-    loginMutation,
+    login: loginMutation,
     registerMutation,
-    logout: logout.mutate,
+    logout,
     errorText,
   };
 };

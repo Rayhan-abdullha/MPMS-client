@@ -1,9 +1,8 @@
 import axios from "axios";
-import Cookies from "js-cookie";
-
+const base_url = "https://mpms-ucmy.onrender.com/api/v1";
+const local = "http://localhost:4000/api/v1";
 export const api = axios.create({
-  baseURL:
-    process.env.NEXT_PUBLIC_API_URL || "https://mpms-ucmy.onrender.com/api/v1",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || base_url,
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
@@ -13,7 +12,8 @@ export const api = axios.create({
 // Outbound interceptor: secure token injection
 // Request Interceptor: Attach Token
 api.interceptors.request.use((config) => {
-  const token = Cookies.get("mpms_auth_token");
+  const token = localStorage.getItem("mpms_auth_token");
+  console.log(token);
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -24,6 +24,7 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    console.log(error);
     if (error.response?.status === 401 && typeof window !== "undefined") {
       localStorage.removeItem("mpms_user");
       // window.location.href = "/auth/login";

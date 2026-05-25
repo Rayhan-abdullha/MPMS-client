@@ -1,4 +1,5 @@
 "use client";
+
 import { useForm } from "react-hook-form";
 import { LogIn, Loader2 } from "lucide-react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -10,11 +11,11 @@ interface LoginFormValues {
 }
 
 export default function LoginPage() {
-  const { loginMutation, errorText } = useAuth();
-  const { mutate: login, isPending } = loginMutation;
+  const { login, errorText } = useAuth();
+  const { mutate, isPending } = login;
 
   const {
-    register: registerField,
+    register,
     handleSubmit,
     formState: { errors },
   } = useForm<LoginFormValues>({
@@ -25,100 +26,105 @@ export default function LoginPage() {
   });
 
   const onSubmit = (data: LoginFormValues) => {
-    login({
+    mutate({
       email: data.email,
       password: data.password,
     });
   };
 
   return (
-    <div className="min-h-screen bg-zinc-50 flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white border border-zinc-200 rounded-xl shadow-sm p-6 sm:p-8 space-y-6">
-        <div className="text-center space-y-1.5">
-          <div className="h-10 w-10 bg-indigo-600 text-white rounded-lg flex items-center justify-center font-bold text-lg shadow-sm mx-auto">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-zinc-50 to-zinc-100 p-4">
+      <div className="w-full max-w-md bg-white border border-zinc-200 rounded-2xl shadow-lg p-6 sm:p-8 space-y-6">
+        {/* Header */}
+        <div className="text-center space-y-2">
+          <div className="h-11 w-11 mx-auto bg-indigo-600 text-white rounded-xl flex items-center justify-center font-bold text-lg shadow-sm">
             M
           </div>
-          <h1 className="text-xl font-bold tracking-tight text-zinc-900">
-            MPMS - Workspace
-          </h1>
-          <p className="text-xs text-zinc-500">Sign in to your account</p>
+          <h1 className="text-2xl font-bold text-zinc-900">MPMS Workspace</h1>
+          <p className="text-sm text-zinc-500">Sign in to continue</p>
         </div>
 
-        {/* API Error Feedback Banner */}
+        {/* Error */}
         {errorText && (
-          <div className="p-3 rounded-lg bg-red-50 border border-red-100 text-xs font-medium text-red-600 animate-in fade-in zoom-in-95">
+          <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-600">
             {errorText}
           </div>
         )}
 
+        {/* Form */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-zinc-700 uppercase tracking-wider">
-              Email Address
+          {/* Email */}
+          <div>
+            <label className="text-xs font-semibold text-zinc-600 uppercase">
+              Email
             </label>
             <input
               type="email"
               disabled={isPending}
-              placeholder="evaluator@datapollex.com"
-              {...registerField("email", {
+              placeholder="you@example.com"
+              {...register("email", {
                 required: "Email is required",
                 pattern: {
                   value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
                   message: "Invalid email address",
                 },
               })}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 bg-white text-zinc-900 outline-none focus:border-indigo-500"
+              className="w-full mt-1 px-3 py-2 rounded-lg border border-zinc-200 focus:border-indigo-500 outline-none text-sm"
             />
             {errors.email && (
-              <p className="text-[11px] font-medium text-red-500 pl-1">
+              <p className="text-xs text-red-500 mt-1">
                 {errors.email.message}
               </p>
             )}
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-zinc-700 uppercase tracking-wider">
+          {/* Password */}
+          <div>
+            <label className="text-xs font-semibold text-zinc-600 uppercase">
               Password
             </label>
             <input
               type="password"
               disabled={isPending}
               placeholder="••••••••"
-              {...registerField("password", {
+              {...register("password", {
                 required: "Password is required",
                 minLength: {
                   value: 6,
-                  message: "Password must be at least 6 characters",
+                  message: "Min 6 characters required",
                 },
               })}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 bg-white text-zinc-900 outline-none focus:border-indigo-500"
+              className="w-full mt-1 px-3 py-2 rounded-lg border border-zinc-200 focus:border-indigo-500 outline-none text-sm"
             />
             {errors.password && (
-              <p className="text-[11px] font-medium text-red-500 pl-1">
+              <p className="text-xs text-red-500 mt-1">
                 {errors.password.message}
               </p>
             )}
           </div>
 
+          {/* Button */}
           <button
             type="submit"
             disabled={isPending}
-            className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-zinc-300 text-white font-semibold text-sm rounded-lg flex items-center justify-center gap-2 shadow-sm cursor-pointer transition-colors"
+            className="w-full py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:bg-zinc-300 text-white font-semibold text-sm flex items-center justify-center gap-2 transition"
           >
             {isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <>
-                <LogIn className="h-4 w-4" /> Sign In
+                <LogIn className="h-4 w-4" />
+                Sign In
               </>
             )}
           </button>
         </form>
-        {/* add a signup link */}
-        <p className="text-xs text-zinc-500">
+
+        {/* Footer */}
+        <p className="text-sm text-center text-zinc-500">
           Don&apos;t have an account?{" "}
-          <Link href="/auth/register" className="text-indigo-600">
-            Sign Up
+          <Link href="/auth/register" className="text-indigo-600 font-medium">
+            Sign up
           </Link>
         </p>
       </div>

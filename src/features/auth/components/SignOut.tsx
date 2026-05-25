@@ -5,9 +5,10 @@ import { LogOut } from "lucide-react";
 
 function SignOut() {
   const { logout } = useAuth();
+  const { mutate } = logout;
 
   const handleLogout = () => {
-    logout();
+    mutate();
   };
 
   return (
