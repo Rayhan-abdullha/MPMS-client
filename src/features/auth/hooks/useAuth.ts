@@ -6,6 +6,7 @@ import { api } from "@/utils/api";
 import { LoginPayload, RegisterPayload, AuthResponse } from "../auth.types";
 import { useState } from "react";
 import Cookies from "js-cookie";
+import toast from "react-hot-toast";
 
 export const useAuth = () => {
   const router = useRouter();
@@ -19,6 +20,7 @@ export const useAuth = () => {
       return data;
     },
     onSuccess: (response) => {
+      toast.success("Login successful!");
       localStorage.setItem("mpms_user", JSON.stringify(response.data.user));
       localStorage.setItem("mpms_auth_token", response.data.accessToken);
       Cookies.set("mpms_auth_token", JSON.stringify(response?.data.user));
@@ -27,6 +29,7 @@ export const useAuth = () => {
       router.push("/dashboard/projects");
     },
     onError: (err: any) => {
+      toast.error("Credentials invalid. Please try again.");
       setErrorText(
         err.response?.data?.message || "Invalid email or password parameters.",
       );
@@ -40,9 +43,11 @@ export const useAuth = () => {
       return data;
     },
     onSuccess: (response) => {
+      toast.success("Registration successful!");
       router.push("/auth/login");
     },
     onError: (err: any) => {
+      toast.error("Registration failed");
       setErrorText(
         err.response?.data?.message ||
           "Registration failed. Email might already be taken.",
@@ -55,6 +60,7 @@ export const useAuth = () => {
       await api.post("/auth/logout");
     },
     onSuccess: () => {
+      toast.success("Logout successful!");
       localStorage.removeItem("mpms_user");
       localStorage.removeItem("mpms_auth_token");
       Cookies.remove("mpms_auth_token");
@@ -64,6 +70,7 @@ export const useAuth = () => {
       router.push("/auth/login");
     },
     onError: () => {
+      toast.error("Logout failed. Please try again.");
       console.error("Logout failed. Please try again.");
     },
   });

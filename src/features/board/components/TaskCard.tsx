@@ -2,35 +2,17 @@
 
 import { Draggable } from "@hello-pangea/dnd";
 import { useState } from "react";
-import { Clock, Calendar, MessageSquare, Check, Edit2, X } from "lucide-react";
-import { Task, useBoard } from "../hooks/useBoard";
+import { Clock, Calendar, MessageSquare, Edit2 } from "lucide-react";
+import { Task } from "../hooks/useBoard";
 
 interface Props {
   task: Task;
   index: number;
-  sprintId: string;
   onViewDetails: (task: Task) => void;
 }
 
-export default function TaskCard({
-  task,
-  index,
-  sprintId,
-  onViewDetails,
-}: Props) {
+export default function TaskCard({ task, index, onViewDetails }: Props) {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [inlineTitle, setInlineTitle] = useState(task.title);
-  const { useUpdateTaskDetails } = useBoard();
-  const { mutate: updateDetails } = useUpdateTaskDetails(sprintId);
-
-  const handleSaveTitle = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (inlineTitle.trim() && inlineTitle !== task.title) {
-      updateDetails({ taskId: task.id, payload: { title: inlineTitle } });
-    }
-    setIsEditingTitle(false);
-  };
-
   const priorityColors = {
     LOW: "bg-zinc-100 text-zinc-700 border-zinc-200",
     MEDIUM: "bg-amber-50 text-amber-700 border-amber-200",
@@ -45,7 +27,7 @@ export default function TaskCard({
           {...provided.draggableProps}
           {...provided.dragHandleProps}
           onClick={() => !isEditingTitle && onViewDetails(task)}
-          className={`p-4 rounded-xl border bg-white border-zinc-200 shadow-xs hover:border-zinc-300 transition-all select-none group flex flex-col gap-2.5 relative ${
+          className={`cursor-pointer p-4 rounded-xl border bg-white border-zinc-200 shadow-xs hover:border-zinc-300 transition-all select-none group flex flex-col gap-2.5 relative ${
             snapshot.isDragging
               ? "shadow-xl ring-2 ring-indigo-600/10 border-indigo-500"
               : ""
@@ -58,52 +40,21 @@ export default function TaskCard({
               {task.priority}
             </span>
             <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-              {isEditingTitle ? (
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={handleSaveTitle}
-                    className="p-1 hover:bg-emerald-50 text-emerald-600 rounded"
-                  >
-                    <Check className="h-3 w-3" />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIsEditingTitle(false);
-                    }}
-                    className="p-1 hover:bg-zinc-100 text-zinc-400 rounded"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsEditingTitle(true);
-                  }}
-                  className="p-1 hover:bg-zinc-50 text-zinc-400 hover:text-zinc-700 rounded"
-                >
-                  <Edit2 className="h-3 w-3" />
-                </button>
-              )}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsEditingTitle(true);
+                }}
+                className="p-1 hover:bg-zinc-50 text-zinc-400 hover:text-zinc-700 rounded"
+              >
+                <Edit2 className="h-3 w-3" />
+              </button>
             </div>
           </div>
 
-          {isEditingTitle ? (
-            <input
-              type="text"
-              value={inlineTitle}
-              onClick={(e) => e.stopPropagation()}
-              onChange={(e) => setInlineTitle(e.target.value)}
-              className="w-full px-2 py-1 text-xs border rounded outline-none focus:border-indigo-600 font-semibold"
-              autoFocus
-            />
-          ) : (
-            <h4 className="text-xs sm:text-sm font-bold text-zinc-900 leading-snug group-hover:text-indigo-600 transition-colors">
-              {task.title}
-            </h4>
-          )}
+          <h4 className="text-xs sm:text-sm font-bold text-zinc-900 leading-snug group-hover:text-indigo-600 transition-colors">
+            {task.title}
+          </h4>
 
           {task.description && (
             <p className="text-[11px] text-zinc-400 line-clamp-2 leading-relaxed">

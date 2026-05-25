@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/utils/api";
+import toast from "react-hot-toast";
 
 export interface BaseEntity {
   id: string;
@@ -130,9 +131,14 @@ export const useBoard = () => {
       },
 
       onSuccess: () => {
+        toast.success("Task created successfully!");
         queryClient.invalidateQueries({
           queryKey: ["tasks", "sprint", sprintId],
         });
+      },
+
+      onError: (err: any) => {
+        toast.error("Task creation failed");
       },
     });
   };
@@ -233,9 +239,13 @@ export const useBoard = () => {
         await api.delete(`/tasks/${taskId}`);
       },
       onSuccess: () => {
+        toast.success("Task deleted successfully!");
         queryClient.invalidateQueries({
           queryKey: ["tasks", "sprint", sprintId],
         });
+      },
+      onError: (err: any) => {
+        toast.error("Task deletion failed");
       },
     });
   };

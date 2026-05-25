@@ -52,7 +52,6 @@ export default function BoardColumn({
                 key={task.id}
                 task={task}
                 index={index}
-                sprintId={sprintId}
                 onViewDetails={onViewDetails}
               />
             ))}

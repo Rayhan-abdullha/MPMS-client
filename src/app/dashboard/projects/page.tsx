@@ -22,6 +22,7 @@ import {
 
 import { clsx } from "clsx";
 import useUserRole from "@/features/board/hooks/useUserRole";
+import toast from "react-hot-toast";
 
 interface ProjectNode {
   id: string;
@@ -93,7 +94,11 @@ export default function UnifiedProjectsDirectoryPage() {
 
   const handleDeleteProject = (projectId: string) => {
     if (window.confirm("Are you sure you want to delete this project?")) {
-      deleteProjectById({ projectId });
+      if (userRole !== "ADMIN" && userRole !== "MANAGER") {
+        toast.error("You do not have permission to delete this project.");
+      } else {
+        deleteProjectById({ projectId });
+      }
     }
   };
 

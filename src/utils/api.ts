@@ -25,6 +25,7 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401 && typeof window !== "undefined") {
       localStorage.removeItem("mpms_user");
+      localStorage.removeItem("mpms_auth_token");
       // window.location.href = "/auth/login";
       console.log("Session expired. Please log in again.");
     }

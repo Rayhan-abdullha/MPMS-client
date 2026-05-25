@@ -128,25 +128,6 @@ export default function RegisterPage() {
               </p>
             )}
           </div>
-          {/* 
-          <div className="space-y-1.5 text-left">
-            <label className="text-xs font-semibold uppercase tracking-wider text-premium-textMuted">
-              Workspace Core Account Role
-            </label>
-            <select
-              {...registerField("role")}
-              className="w-full px-3.5 py-2.5 rounded-lg border border-premium-border bg-white text-zinc-900 text-sm transition-all duration-200 outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary shadow-sm shadow-zinc-100/50 cursor-pointer"
-            >
-              <option value="MEMBER">Team Member (Work Tracking Only)</option>
-              <option value="MANAGER">
-                Project Manager (Sprints & Administration)
-              </option>
-              <option value="ADMIN">
-                System Administrator (Full Infrastructure Access)
-              </option>
-            </select>
-          </div> */}
-
           <button
             type="submit"
             disabled={isPending}
@@ -166,7 +147,7 @@ export default function RegisterPage() {
           Already have an account?{" "}
           <a
             href="/auth/login"
-            className="font-semibold text-brand-primary hover:text-brand-hover underline transition-colors"
+            className="cursor-pointer font-semibold text-brand-primary hover:text-brand-hover underline transition-colors"
           >
             Sign in instead
           </a>

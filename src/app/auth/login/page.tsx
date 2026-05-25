@@ -123,7 +123,10 @@ export default function LoginPage() {
         {/* Footer */}
         <p className="text-sm text-center text-zinc-500">
           Don&apos;t have an account?{" "}
-          <Link href="/auth/register" className="text-indigo-600 font-medium">
+          <Link
+            href="/auth/register"
+            className="text-indigo-600 font-medium cursor-pointer"
+          >
             Sign up
           </Link>
         </p>

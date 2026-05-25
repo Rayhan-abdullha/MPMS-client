@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/utils/api";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import toast from "react-hot-toast";
 
 export interface Project {
   _id: string;
@@ -55,6 +56,7 @@ export const useProject = () => {
     },
 
     onSuccess: () => {
+      toast.success("Project created successfully!");
       queryClient.invalidateQueries({
         queryKey: ["projects"],
       });
@@ -63,7 +65,7 @@ export const useProject = () => {
     },
 
     onError: (err: any) => {
-      console.error("Project creation error:", err);
+      toast.error("Project creation failed");
       setErrorText(err.response?.data?.message || "Project creation failed");
     },
   });
@@ -78,6 +80,7 @@ export const useProject = () => {
       },
 
       onSuccess: () => {
+        toast.success("Project deleted successfully!");
         queryClient.invalidateQueries({
           queryKey: ["projects"],
         });
@@ -127,9 +130,15 @@ export const useProject = () => {
       },
 
       onSuccess: () => {
+        toast.success("Sprint created successfully!");
         queryClient.invalidateQueries({
           queryKey: ["sprints", projectId],
         });
+      },
+
+      onError: (err: any) => {
+        toast.error("Sprint creation failed");
+        setErrorText(err.response?.data?.message || "Sprint creation failed");
       },
     });
   };

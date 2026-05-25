@@ -5,6 +5,7 @@ import MobileHeader from "@/components/navbar/MobileHeader";
 import MobileSidebar from "@/components/navbar/MobileSidebar";
 import Sidebar from "@/components/navbar/Sidebar";
 import React, { useState } from "react";
+import { Toaster } from "react-hot-toast";
 
 export default function DashboardLayout({
   children,
@@ -24,6 +25,7 @@ export default function DashboardLayout({
       <main className="flex-1 md:pl-64 pt-16 md:pt-0 min-h-screen">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {children}
+          <Toaster />
         </div>
       </main>
     </div>
