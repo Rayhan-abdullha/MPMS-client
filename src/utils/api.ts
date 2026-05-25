@@ -13,7 +13,6 @@ export const api = axios.create({
 // Request Interceptor: Attach Token
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("mpms_auth_token");
-  console.log(token);
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -24,7 +23,6 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    console.log(error);
     if (error.response?.status === 401 && typeof window !== "undefined") {
       localStorage.removeItem("mpms_user");
       // window.location.href = "/auth/login";

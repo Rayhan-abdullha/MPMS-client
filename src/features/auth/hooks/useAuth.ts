@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { api } from "@/utils/api";
 import { LoginPayload, RegisterPayload, AuthResponse } from "../auth.types";
 import { useState } from "react";
+import Cookies from "js-cookie";
 
 export const useAuth = () => {
   const router = useRouter();
@@ -20,6 +21,8 @@ export const useAuth = () => {
     onSuccess: (response) => {
       localStorage.setItem("mpms_user", JSON.stringify(response.data.user));
       localStorage.setItem("mpms_auth_token", response.data.accessToken);
+      Cookies.set("mpms_auth_token", JSON.stringify(response?.data.user));
+      Cookies.set("mpms_auth_token", response?.data.accessToken);
       queryClient.setQueryData(["current_user"], response.data.user);
       router.push("/dashboard/projects");
     },
@@ -53,6 +56,9 @@ export const useAuth = () => {
     },
     onSuccess: () => {
       localStorage.removeItem("mpms_user");
+      localStorage.removeItem("mpms_auth_token");
+      Cookies.remove("mpms_auth_token");
+      Cookies.remove("mpms_user");
       queryClient.setQueryData(["current_user"], null);
       queryClient.removeQueries();
       router.push("/auth/login");

@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export function proxy(request: NextRequest) {
   const token = request.cookies.get("mpms_auth_token")?.value;
-  const { pathname } = request.nextUrl;
-
+  const pathname = request.nextUrl.pathname;
   const isDashboardRoute = pathname.startsWith("/dashboard");
   const isAuthRoute = pathname.startsWith("/auth");
 
