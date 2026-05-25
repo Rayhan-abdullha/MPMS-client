@@ -1,9 +1,8 @@
 "use client";
-
-import React from "react";
 import { useForm } from "react-hook-form";
 import { LogIn, Loader2 } from "lucide-react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import Link from "next/link";
 
 interface LoginFormValues {
   email: string;
@@ -11,7 +10,8 @@ interface LoginFormValues {
 }
 
 export default function LoginPage() {
-  const { login, isLoggingIn, errorText } = useAuth();
+  const { loginMutation, errorText } = useAuth();
+  const { mutate: login, isPending } = loginMutation;
 
   const {
     register: registerField,
@@ -60,7 +60,7 @@ export default function LoginPage() {
             </label>
             <input
               type="email"
-              disabled={isLoggingIn}
+              disabled={isPending}
               placeholder="evaluator@datapollex.com"
               {...registerField("email", {
                 required: "Email is required",
@@ -84,7 +84,7 @@ export default function LoginPage() {
             </label>
             <input
               type="password"
-              disabled={isLoggingIn}
+              disabled={isPending}
               placeholder="••••••••"
               {...registerField("password", {
                 required: "Password is required",
@@ -104,10 +104,10 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            disabled={isLoggingIn}
+            disabled={isPending}
             className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-zinc-300 text-white font-semibold text-sm rounded-lg flex items-center justify-center gap-2 shadow-sm cursor-pointer transition-colors"
           >
-            {isLoggingIn ? (
+            {isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <>
@@ -116,6 +116,13 @@ export default function LoginPage() {
             )}
           </button>
         </form>
+        {/* add a signup link */}
+        <p className="text-xs text-zinc-500">
+          Don&apos;t have an account?{" "}
+          <Link href="/auth/register" className="text-indigo-600">
+            Sign Up
+          </Link>
+        </p>
       </div>
     </div>
   );

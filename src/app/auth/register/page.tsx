@@ -16,7 +16,8 @@ interface RegisterFormValues {
 }
 
 export default function RegisterPage() {
-  const { register, isLoggingIn, errorText } = useAuth();
+  const { registerMutation, errorText } = useAuth();
+  const { mutate: register, isPending } = registerMutation;
   const {
     register: registerField,
     handleSubmit,
@@ -148,10 +149,10 @@ export default function RegisterPage() {
 
           <button
             type="submit"
-            disabled={isLoggingIn}
+            disabled={isPending}
             className="w-full mt-2 py-2.5 px-4 bg-brand-primary hover:bg-brand-hover disabled:bg-zinc-300 text-white font-medium text-sm rounded-lg shadow-sm transition-colors duration-150 flex items-center justify-center gap-2 outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary cursor-pointer disabled:cursor-not-allowed"
           >
-            {isLoggingIn ? (
+            {isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <>

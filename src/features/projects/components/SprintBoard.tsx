@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock, Layers } from "lucide-react";
+import { Clock, Layers, Loader2 } from "lucide-react";
 import React, { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useProject } from "../hooks/useProject";
@@ -13,7 +13,7 @@ const SprintBoard = () => {
   const [hoursInput, setHoursInput] = useState<string>("");
 
   const router = useRouter();
-  const { useGetSprintsByProject, useCreateSprintByProject } = useProject();
+  const { useGetSprintsByProject } = useProject();
   const { data, isLoading } = useGetSprintsByProject(projectId);
 
   const sprints =
@@ -22,6 +22,7 @@ const SprintBoard = () => {
       num: sprint.order ?? 1,
       title: sprint.title,
       count: sprint._count?.tasks ?? 0,
+      status: sprint?.status,
     })) || [];
 
   const handleLogTime = (e: React.FormEvent) => {
@@ -50,7 +51,10 @@ const SprintBoard = () => {
         </h3>
 
         {isLoading ? (
-          <div className="text-xs text-zinc-500 p-3">Loading sprints...</div>
+          <span className="flex items-center gap-2">
+            <Loader2 className="animate-spin h-4 w-4 text-zinc-400" />
+            <div className="text-xs text-zinc-500 p-3">Loading sprints...</div>
+          </span>
         ) : sprints.length === 0 ? (
           <div className="text-xs text-zinc-500 p-3">No sprints found</div>
         ) : (

@@ -18,6 +18,7 @@ import {
   SlidersHorizontal,
   X,
   User,
+  Loader2,
 } from "lucide-react";
 import { AssignedTask } from "@/features/my-task/MyTask.types";
 import { MyTaskDetailsModal } from "@/features/my-task/components/MyTaskDetailsModal";
@@ -108,8 +109,9 @@ export default function MyTasksWorkspace() {
 
   if (isLoading) {
     return (
-      <div className="p-8 text-xs font-mono font-bold text-zinc-400 tracking-widest uppercase animate-pulse">
-        Loading pipeline task graph...
+      <div className="flex flex-col items-center justify-center gap-2">
+        <Loader2 className="animate-spin" />
+        <p>Loading...</p>
       </div>
     );
   }

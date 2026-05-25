@@ -17,6 +17,7 @@ import {
   Delete,
   DeleteIcon,
   Trash,
+  Loader2,
 } from "lucide-react";
 
 import { clsx } from "clsx";
@@ -160,9 +161,7 @@ export default function UnifiedProjectsDirectoryPage() {
       {/* Grid */}
       {isLoading ? (
         <div className="text-center py-12 border border-dashed border-zinc-200 rounded-xl bg-zinc-50/50">
-          <p className="text-sm font-medium text-zinc-600">
-            Loading projects...
-          </p>
+          <Loader2 className="h-8 w-8 text-zinc-300 mx-auto mb-2 animate-spin" />
         </div>
       ) : filteredProjects.length === 0 ? (
         <div className="text-center py-12 border border-dashed border-zinc-200 rounded-xl bg-zinc-50/50">

@@ -28,15 +28,7 @@ const AllProjectSprints = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {sprints.map((sprint: Sprint) => {
               const isActive = activeSprint === sprint.id;
-              const now = new Date();
-
-              // add sprint.status //TODO
-              const status =
-                now < new Date(sprint.startDate)
-                  ? "UPCOMING"
-                  : now > new Date(sprint.endDate)
-                    ? "COMPLETED"
-                    : "ACTIVE";
+              const status = sprint.status;
 
               return (
                 <Link
@@ -68,9 +60,9 @@ const AllProjectSprints = () => {
                       className={`px-2 py-1 rounded-lg text-[10px] font-bold tracking-wide ${
                         status === "ACTIVE"
                           ? "bg-emerald-100 text-emerald-700"
-                          : status === "UPCOMING"
-                            ? "bg-blue-100 text-blue-700"
-                            : "bg-zinc-100 text-zinc-600"
+                          : status === "COMPLETED"
+                            ? "bg-amber-100 text-amber-700"
+                            : "bg-zinc-100 text-zinc-700"
                       }`}
                     >
                       {status}

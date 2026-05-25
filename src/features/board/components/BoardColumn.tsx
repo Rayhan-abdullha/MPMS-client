@@ -21,7 +21,6 @@ export default function BoardColumn({
   onAddTask,
   onViewDetails,
 }: Props) {
-  console.log(tasks);
   return (
     <div className="bg-zinc-50/60 border border-zinc-200/80 rounded-2xl flex flex-col max-h-[75vh]">
       <div className="p-4 flex items-center justify-between border-b border-zinc-200/60 bg-white rounded-t-2xl">

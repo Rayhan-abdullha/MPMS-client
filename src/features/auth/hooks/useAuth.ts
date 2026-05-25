@@ -52,9 +52,9 @@ export const useAuth = () => {
       await api.post("/auth/logout");
     },
     onSuccess: () => {
-      console.log("Logout successful");
       localStorage.removeItem("mpms_user");
       queryClient.setQueryData(["current_user"], null);
+      queryClient.removeQueries();
       router.push("/auth/login");
     },
     onError: () => {
@@ -63,10 +63,8 @@ export const useAuth = () => {
   });
 
   return {
-    login: loginMutation.mutate,
-    isLoggingIn: loginMutation.isPending,
-    register: registerMutation.mutate,
-    isRegistering: registerMutation.isPending,
+    loginMutation,
+    registerMutation,
     logout: logout.mutate,
     errorText,
   };

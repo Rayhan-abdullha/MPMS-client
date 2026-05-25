@@ -25,6 +25,7 @@ export interface Sprint extends BaseEntity {
   endDate: string;
   order: number;
   projectId?: string;
+  status: "ACTIVE" | "COMPLETED" | "ARCHIVED";
   project: Project;
   taskCount: number;
 }
