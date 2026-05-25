@@ -24,13 +24,15 @@ export default function BoardHeader({ userRole, onAddTask }: Props) {
         </p>
       </div>
 
-      <button
-        onClick={onAddTask}
-        className="inline-flex items-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg"
-      >
-        <Plus className="h-3.5 w-3.5" />
-        Add Task Card
-      </button>
+      {userRole === "ADMIN" || userRole === "MANAGER" ? (
+        <button
+          onClick={onAddTask}
+          className="flex items-center gap-2 text-sm font-semibold text-brand-primary"
+        >
+          <Plus className="w-4 h-4" />
+          Add Task
+        </button>
+      ) : null}
     </div>
   );
 }

@@ -30,6 +30,7 @@ const AllProjectSprints = () => {
               const isActive = activeSprint === sprint.id;
               const now = new Date();
 
+              // add sprint.status //TODO
               const status =
                 now < new Date(sprint.startDate)
                   ? "UPCOMING"

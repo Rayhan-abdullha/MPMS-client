@@ -68,6 +68,23 @@ export const useProject = () => {
     },
   });
 
+  const useDeleteProjectById = () => {
+    return useMutation({
+      mutationFn: async ({ projectId }: { projectId: string }) => {
+        const { data } = await api.delete<ApiResponse<Project>>(
+          `/projects/${projectId}`,
+        );
+        return data;
+      },
+
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: ["projects"],
+        });
+      },
+    });
+  };
+
   const useGetProjects = () => {
     return useQuery({
       queryKey: ["projects"],
@@ -140,6 +157,7 @@ export const useProject = () => {
     useGetSingleProject,
     useGetSprintsByProject,
     useCreateSprintByProject,
+    useDeleteProjectById,
     errorText,
   };
 };

@@ -14,9 +14,13 @@ import {
   DollarSign,
   ArrowRight,
   UserCheck,
+  Delete,
+  DeleteIcon,
+  Trash,
 } from "lucide-react";
 
 import { clsx } from "clsx";
+import useUserRole from "@/features/board/hooks/useUserRole";
 
 interface ProjectNode {
   id: string;
@@ -38,29 +42,12 @@ export default function UnifiedProjectsDirectoryPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
-  const [userRole, setUserRole] = useState<"ADMIN" | "MANAGER" | "MEMBER">(
-    "MEMBER",
-  );
+  const userRole = useUserRole();
 
-  const { useGetProjects } = useProject();
+  const { useGetProjects, useDeleteProjectById } = useProject();
   const { data, isLoading } = useGetProjects();
 
-  // session role
-  useEffect(() => {
-    try {
-      const storedUser = localStorage.getItem("mpms_user");
-
-      if (storedUser) {
-        const parsed = JSON.parse(storedUser);
-
-        if (parsed.role) {
-          setUserRole(parsed.role.toUpperCase());
-        }
-      }
-    } catch (e) {
-      console.warn("Session extraction error:", e);
-    }
-  }, []);
+  const { mutateAsync: deleteProjectById } = useDeleteProjectById();
 
   const isManagementTier = userRole === "ADMIN" || userRole === "MANAGER";
 
@@ -102,6 +89,12 @@ export default function UnifiedProjectsDirectoryPage() {
 
     return matchesSearch && matchesStatus;
   });
+
+  const handleDeleteProject = (projectId: string) => {
+    if (window.confirm("Are you sure you want to delete this project?")) {
+      deleteProjectById({ projectId });
+    }
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-200">
@@ -206,14 +199,20 @@ export default function UnifiedProjectsDirectoryPage() {
                       </h3>
                     </div>
 
-                    <span
-                      className={clsx(
-                        "px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border rounded-md whitespace-nowrap",
-                        getStatusBadgeStyles(project.status),
-                      )}
-                    >
-                      {project.status}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={clsx(
+                          "px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border rounded-md whitespace-nowrap",
+                          getStatusBadgeStyles(project.status),
+                        )}
+                      >
+                        {project.status}
+                      </span>
+                      <Trash
+                        onClick={() => handleDeleteProject(project.id)}
+                        className="h-4 w-4 text-zinc-400 cursor-pointer hover:text-zinc-600 hover:scale-110 transition-transform"
+                      />
+                    </div>
                   </div>
 
                   <p className="text-xs text-zinc-500 leading-relaxed line-clamp-3 mb-5">

@@ -2,7 +2,7 @@
 
 import { Clock, Layers } from "lucide-react";
 import React, { useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useProject } from "../hooks/useProject";
 
 const SprintBoard = () => {
@@ -12,8 +12,8 @@ const SprintBoard = () => {
   const [loggedHours, setLoggedHours] = useState<number>(14);
   const [hoursInput, setHoursInput] = useState<string>("");
 
+  const router = useRouter();
   const { useGetSprintsByProject, useCreateSprintByProject } = useProject();
-
   const { data, isLoading } = useGetSprintsByProject(projectId);
 
   const sprints =
@@ -35,6 +35,11 @@ const SprintBoard = () => {
     }
   };
 
+  const handleSprint = (sprintId: string, projectId: string) => {
+    router.push(`/dashboard/board/${sprintId}?projectId=${projectId}`);
+    setActiveSprint(sprintId);
+  };
+
   return (
     <div className="lg:col-span-5 space-y-4">
       {/* Sprint List */}
@@ -51,8 +56,8 @@ const SprintBoard = () => {
         ) : (
           sprints.map((sprint) => (
             <div
+              onClick={() => handleSprint(sprint.id, projectId)}
               key={sprint.id}
-              onClick={() => setActiveSprint(sprint.id)}
               className={`p-4 rounded-xl border transition-all cursor-pointer select-none ${
                 activeSprint === sprint.id
                   ? "border-indigo-600 bg-indigo-50/40 shadow-xs"
@@ -83,7 +88,7 @@ const SprintBoard = () => {
             Track
           </h4>
 
-          <span className="text-xs font-mono font-bold bg-zinc-100 text-zinc-700 border border-zinc-200 px-2 py-0.5 rounded">
+          <span className="text-xs font-bold bg-zinc-100 text-zinc-700 border border-zinc-200 px-2 py-0.5 rounded">
             Total: {loggedHours} hrs
           </span>
         </div>

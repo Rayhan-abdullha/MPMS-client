@@ -15,6 +15,7 @@ import {
 } from "../hooks/useBoard";
 import { DragDropContext, DropResult } from "@hello-pangea/dnd";
 import { Loader2 } from "lucide-react";
+import useUserRole from "../hooks/useUserRole";
 
 const COLUMNS = [
   { id: "TODO", title: "To Do" },
@@ -24,23 +25,18 @@ const COLUMNS = [
 ];
 
 export default function SprintKanbanEngineView() {
-  // -----------------------------
-  // FETCH TASKS
-
   const params = useParams();
   const activeSprintId = params?.slag?.[0] ?? "";
-
-  const userRole = "MANAGER"; // Read from context authentication session slice in production
-
+  const role = useUserRole();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedTaskNode, setSelectedTaskNode] = useState<Task | null>(null);
 
   const { useGetTaskBySprintId, useUpdateTaskStatus } = useBoard();
   const { data: tasks = [], isLoading } = useGetTaskBySprintId(activeSprintId);
   const { mutate: updateStatus } = useUpdateTaskStatus(activeSprintId);
-  console.log(tasks);
 
   const handleDragEnd = (result: DropResult) => {
+    if (role === "MEMBER") return;
     const { destination, source, draggableId } = result;
     if (!destination) return;
     if (
@@ -72,10 +68,7 @@ export default function SprintKanbanEngineView() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 antialiased">
-      <BoardHeader
-        userRole={userRole}
-        onAddTask={() => setIsCreateOpen(true)}
-      />
+      <BoardHeader userRole={role!} onAddTask={() => setIsCreateOpen(true)} />
 
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start">

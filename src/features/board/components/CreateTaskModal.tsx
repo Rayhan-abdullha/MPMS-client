@@ -13,6 +13,7 @@ import {
 import { useBoard } from "../hooks/useBoard";
 import { useUsers } from "@/features/user/hooks/useUsers";
 import { Team } from "@/features/user/user.types";
+import { useQueryClient } from "@tanstack/react-query";
 
 export interface TaskFormData {
   title: string;
@@ -36,6 +37,7 @@ export default function CreateTaskModal({
   const sprintId = params?.slag as string;
   const searchParams = useSearchParams();
   const projectId = searchParams.get("projectId");
+  const queryClient = useQueryClient();
 
   const {
     register,
@@ -82,6 +84,7 @@ export default function CreateTaskModal({
 
     createTask(payload, {
       onSuccess: () => {
+        queryClient.resetQueries();
         reset();
         onClose();
       },
@@ -217,6 +220,12 @@ export default function CreateTaskModal({
             </div>
 
             <div className="space-y-1.5 mt-2 bg-zinc-50 p-2 border border-zinc-200/60 rounded-xl max-h-[160px] overflow-y-auto custom-scrollbar">
+              {isLoading && (
+                <p className="text-[10px] font-medium text-zinc-400">
+                  Loading...
+                </p>
+              )}
+
               {team!.map((u: Team) => {
                 const active = selectedUsers.includes(u.id);
 

@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Layers, MessageSquare, Send } from "lucide-react";
 import SprintBoard from "@/features/projects/components/SprintBoard";
 import CreateSprintModal from "@/features/board/components/CreateSprintModal";
+import useUserRole from "@/features/board/hooks/useUserRole";
 
 interface CommentNode {
   id: string;
@@ -34,7 +35,7 @@ export default function UserProjectDetailView() {
   const [isSprintModalOpen, setIsSprintModalOpen] = useState(false);
 
   // Example permission flag
-  const isManagementTier = true;
+  const role = useUserRole();
 
   const postThreadedComment = (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,8 +83,7 @@ export default function UserProjectDetailView() {
               <div className="bg-indigo-600 h-full w-[64%]" />
             </div>
           </div>
-
-          {isManagementTier && (
+          {(role === "ADMIN" || role === "MANAGER") && (
             <button
               onClick={() => setIsSprintModalOpen(true)}
               className="inline-flex items-center gap-1.5 px-3 py-2 border border-zinc-200 text-zinc-700 hover:bg-zinc-50 text-xs font-bold rounded-lg transition-colors cursor-pointer outline-none"

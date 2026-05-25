@@ -124,8 +124,10 @@ export const useBoard = () => {
           `/tasks/sprints/${sprintId}`,
           payload,
         );
-        return data;
+
+        return data.data.task;
       },
+
       onSuccess: () => {
         queryClient.invalidateQueries({
           queryKey: ["tasks", "sprint", sprintId],
@@ -133,7 +135,6 @@ export const useBoard = () => {
       },
     });
   };
-
   const useUpdateTaskStatus = (sprintId: string) => {
     return useMutation({
       mutationFn: async ({
@@ -179,6 +180,9 @@ export const useBoard = () => {
         queryClient.invalidateQueries({
           queryKey: ["tasks", "sprint", sprintId],
         });
+        queryClient.invalidateQueries({
+          queryKey: ["tasks", "assigned-to-me"],
+        });
       },
     });
   };
@@ -215,7 +219,9 @@ export const useBoard = () => {
         queryClient.invalidateQueries({
           queryKey: ["tasks", "sprint", sprintId],
         });
-        queryClient.invalidateQueries({ queryKey: ["task", updatedTask.id] });
+        queryClient.invalidateQueries({
+          queryKey: ["tasks", "assigned-to-me"],
+        });
       },
     });
   };
@@ -233,6 +239,7 @@ export const useBoard = () => {
     });
   };
 
+  // TODO
   const useAddComment = (sprintId: string, taskId: string) => {
     return useMutation({
       mutationFn: async (payload: { text: string; parentId?: string }) => {
