@@ -128,7 +128,7 @@ export default function RegisterPage() {
               </p>
             )}
           </div>
-
+          {/* 
           <div className="space-y-1.5 text-left">
             <label className="text-xs font-semibold uppercase tracking-wider text-premium-textMuted">
               Workspace Core Account Role
@@ -145,7 +145,7 @@ export default function RegisterPage() {
                 System Administrator (Full Infrastructure Access)
               </option>
             </select>
-          </div>
+          </div> */}
 
           <button
             type="submit"

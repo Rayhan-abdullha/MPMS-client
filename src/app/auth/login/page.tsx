@@ -39,11 +39,9 @@ export default function LoginPage() {
             M
           </div>
           <h1 className="text-xl font-bold tracking-tight text-zinc-900">
-            Minimal Project Management
+            MPMS - Workspace
           </h1>
-          <p className="text-xs text-zinc-500">
-            DataPollex Recruitment Task Portal Assignment{" "}
-          </p>
+          <p className="text-xs text-zinc-500">Sign in to your account</p>
         </div>
 
         {/* API Error Feedback Banner */}
